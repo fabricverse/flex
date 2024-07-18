@@ -129,6 +129,14 @@ app_license = "mit"
 # 		"on_trash": "method"
 # 	}
 # }
+doc_events = {
+	"Expense Entry": {
+		"on_update": "expense_request.api.setup"
+	},
+	"Expense Request": {
+		"validate": "expense_request.approve_expense.approve"
+	}
+}
 
 # Scheduled Tasks
 # ---------------
