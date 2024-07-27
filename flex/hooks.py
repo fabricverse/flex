@@ -131,10 +131,10 @@ app_license = "mit"
 # }
 doc_events = {
 	"Expense Entry": {
-		"on_update": "expense_request.api.setup"
+		"on_update": "flex.app.setup"
 	},
 	"Expense Request": {
-		"validate": "expense_request.approve_expense.approve"
+		"validate": "flex.approve_expense.approve"
 	}
 }
 
