@@ -7,33 +7,58 @@
  "engine": "InnoDB",
  "field_order": [
   "approver",
+  "full_name",
   "column_break_pnhl",
-  "approval_status"
+  "approval_status",
+  "section_break_bdte",
+  "comment"
  ],
  "fields": [
   {
    "fieldname": "approver",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Approver",
-   "options": "User",
-   "reqd": 1
+   "options": "User"
   },
   {
    "fieldname": "column_break_pnhl",
    "fieldtype": "Column Break"
   },
   {
+   "columns": 3,
    "fieldname": "approval_status",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Approval Status"
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 5,
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Comment",
+   "max_height": "10em",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_bdte",
+   "fieldtype": "Section Break"
+  },
+  {
+   "bold": 1,
+   "columns": 2,
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-18 13:07:54.000094",
+ "modified": "2024-08-08 17:03:20.248967",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Approvers",
