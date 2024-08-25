@@ -3,12 +3,12 @@
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "format:MPZ-{currency}-{YYYY}-{#####}",
  "creation": "2024-07-02 10:25:42.284593",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "payment_type",
+  "series",
   "column_break_mxib",
   "reference",
   "payment_date",
@@ -38,8 +38,23 @@
   "no_of_expense_items",
   "column_break_gljc",
   "total",
-  "section_break_lrjn",
+  "section_break_vdvf",
+  "raised_by",
+  "column_break_uygv",
   "remarks",
+  "section_break_wdig",
+  "first_quotation",
+  "allow_incomplete_quotations",
+  "column_break_ajbv",
+  "second_quotation",
+  "column_break_lvqu",
+  "third_quotation",
+  "section_break_vsjs",
+  "submitted_by",
+  "initial_approver",
+  "column_break_zbsw",
+  "checked_by",
+  "final_approver",
   "approvals_section",
   "workflow_state",
   "approval_comment",
@@ -50,8 +65,7 @@
   "amended_from",
   "column_break_pfki",
   "payable_journal_entry",
-  "payment_journal_entry",
-  "prepared_by"
+  "payment_journal_entry"
  ],
  "fields": [
   {
@@ -79,15 +93,6 @@
    "max_height": "5em"
   },
   {
-   "fieldname": "prepared_by",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Prepared By",
-   "no_copy": 1,
-   "options": "User",
-   "reqd": 1
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -108,7 +113,8 @@
   {
    "fieldname": "section_break_gzgq",
    "fieldtype": "Section Break",
-   "hide_border": 1
+   "hide_border": 1,
+   "label": "Request Details"
   },
   {
    "default": "1",
@@ -156,7 +162,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: !doc.party && (in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.docstatus==0)",
+   "depends_on": "eval: !doc.party && (in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.docstatus==0) && doc.series",
    "fieldname": "party_type",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -181,7 +187,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Cost Center",
-   "options": "Cost Center"
+   "options": "Cost Center",
+   "reqd": 1
   },
   {
    "allow_on_submit": 1,
@@ -330,12 +337,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.no_of_expense_items > 0",
-   "fieldname": "section_break_lrjn",
-   "fieldtype": "Section Break",
-   "hide_border": 1
-  },
-  {
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks",
@@ -368,16 +369,119 @@
    "no_copy": 1,
    "options": "Journal Entry",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_vsjs",
+   "fieldtype": "Section Break",
+   "label": "Approvers"
+  },
+  {
+   "fieldname": "initial_approver",
+   "fieldtype": "Read Only",
+   "label": "Initial Approver",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_zbsw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "checked_by",
+   "fieldtype": "Read Only",
+   "label": "Checked By",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "final_approver",
+   "fieldtype": "Read Only",
+   "label": "Final Approver",
+   "no_copy": 1
+  },
+  {
+   "depends_on": "eval: (!doc.party_type && doc.docstatus==0)",
+   "fieldname": "series",
+   "fieldtype": "Link",
+   "label": "Series",
+   "options": "Document Series",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_vdvf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_uygv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Submitted By",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "raised_by",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Raised By",
+   "no_copy": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: !doc.__islocal",
+   "fieldname": "section_break_wdig",
+   "fieldtype": "Section Break",
+   "label": "Attach Quotations"
+  },
+  {
+   "fieldname": "first_quotation",
+   "fieldtype": "Attach",
+   "label": "First Quotation",
+   "mandatory_depends_on": "eval: doc.allow_incomplete_quotations == 0",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "column_break_ajbv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "second_quotation",
+   "fieldtype": "Attach",
+   "label": "Second Quotation",
+   "mandatory_depends_on": "eval: doc.allow_incomplete_quotations == 0",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "column_break_lvqu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "third_quotation",
+   "fieldtype": "Attach",
+   "label": "Third Quotation",
+   "mandatory_depends_on": "eval: doc.allow_incomplete_quotations == 0",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_incomplete_quotations",
+   "fieldtype": "Check",
+   "label": "Allow Incomplete Quotations",
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-14 14:22:09.108807",
+ "modified": "2024-08-24 12:41:43.399119",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
- "naming_rule": "Expression",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {

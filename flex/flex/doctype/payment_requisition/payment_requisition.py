@@ -6,13 +6,29 @@ from frappe.model.document import Document
 
 
 class PaymentRequisition(Document):
+	def autoname(self):
+		self.name = self.generate_custom_name()
+	
+	def after_insert(self):
+		self.db_set("allow_incomplete_quotations", 0)
+		self.notify_update()
+	
+	def after_save(self):
+		pass
+		# if self.workflow_state in ["Quotations Required", "Submitted to Accounts", "Ready for Submission"]:
+		# 	if self.allow_incomplete_quotations == 0 and (not self.first_quotation or not self.second_quotation or not self.third_quotation):
+		# 		frappe.throw("Please upload all quotations or tick the <strong>Allow Incomplete Quotations</strong> checkbox. " + str(self.allow_incomplete_quotations))
+	
 	@frappe.whitelist()
-	def validate_workflow(self):			
+	def execute_workflow(self):
+		if len(self.expenses) < 1:
+			return
+
 		settings = frappe.get_single("Payment Requisition Settings")
 		user = frappe.get_doc("User", frappe.session.user)
 
-		self.workflow_validation(user)
-		self.setup_details(settings, user)
+		self.workflow_setup(user)
+		self.setup_expense_details(settings, user)
 
 		if self.workflow_state in ["Awaiting Internal Approval", "Ready for Submission"]:
 			self.payment_date = None
@@ -35,7 +51,351 @@ class PaymentRequisition(Document):
 			self.before_cancel()
 			if self.docstatus != 2:
 				self.docstatus = 2
-	
+		
+		# self.apply_signature(self, user)
+		
+
+
+	def apply_signature(self, user):
+		"""
+		Apply signature to the document, i.e signer name according to their input
+			- cancel: cancelled by {signer}
+			- approve: approver name {signer}
+		"""
+		pass
+
+	def check_attachments(self, user):
+		"""
+		1st: wf state = attach docs
+			- if no attachments, indicate message
+			- warn if there are not quotations: you have not uploaded any quotations
+			- if attachments, go to accounts for checking: wf action = submit to accounts
+				- initiated by {user.full_name}
+				- submitted without quotations
+				- submitted with quotations
+		2nd: wf state = submitted to accounts
+			- quotations required by accounts user: wf state = submitted to accounts
+			- next action:  submit for internal approval
+		
+
+
+		"""
+		is_accounts_user = self.user_has_role(user, "Accounts User")
+		# go straight to attach docs workflow state, otherwise go to awaiting internal approval
+
+
+	def user_has_role(self, user, roles):
+		user_roles = frappe.get_roles(user.name)
+		for role in roles:
+			if role in user_roles:
+				return True
+		return False
+
+	def workflow_setup(self, user):
+		
+		if self.has_value_changed("workflow_state"):
+			if self.workflow_state not in ["Approved", "Payment Completed"]:
+				self.approval_comment = None
+				
+			self.append("approval_history", {
+				"approver": user.name,
+				"full_name": user.full_name,
+				"approval_status": self.workflow_state,
+				"comment": self.approval_comment
+			})
+
+			self.update_signatories(user)
+
+	def update_signatories(self, user):		
+		# check_attachments
+		
+		if not self.raised_by and self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Quotations Required", "Revision Requested", "Employee Revision Required"]:
+			owner = frappe.get_doc("User", self.owner)
+			self.raised_by = owner.full_name
+
+			self.submitted_by = "Pending"
+			self.checked_by = "Pending"
+			self.initial_approver = "Pending"
+			self.final_approver = "Pending"
+
+		if self.workflow_state in ["Quotations Required", "Submitted to Accounts", "Ready for Submission"]:
+			# if self.allow_incomplete_quotations == 0 and not self.first_quotation or not self.second_quotation or not self.third_quotation:
+			# 	frappe.throw("Please upload all quotations or specify that incomplete quotations are allowed.")
+
+			if self.user_has_role(user, ["Accounts User", "Accounts Manager"]) and self.submitted_by != user.full_name:
+				self.submitted_by = user.full_name
+				
+
+		if self.workflow_state in ["Ready for Submission", "Awaiting Internal Approval",]:
+			if not self.submitted_by or self.submitted_by != user.full_name:
+				self.submitted_by = user.full_name
+
+		if self.workflow_state in ["Awaiting Director Approval (1)"]:
+			self.checked_by = user.full_name
+
+		if self.workflow_state == "Awaiting Director Approval (2)":
+			self.initial_approver = user.full_name
+			
+		if self.workflow_state == "Approved":
+			self.final_approver = user.full_name
+
+		# frappe.msgprint(self.workflow_state + " user: " + user.full_name)
+		# print(self.workflow_state + " user: " + user.full_name)
+		
+		
+
+
+
+	def setup_expense_details(self, settings, user):
+		# add expenses up and set the total field
+		# add default project and cost center to expense items
+
+		total = 0
+		count = 0
+		expense_items = []
+
+		
+		for detail in self.expenses:
+			total += float(detail.amount)        
+			count += 1
+			
+			if not detail.project and self.project_name:
+				detail.project = self.project_name
+
+			if not detail.activity and self.activity:
+				detail.activity = self.activity
+			
+			if not detail.cost_center and self.cost_center:
+				detail.cost_center = self.cost_center
+
+			expense_items.append(detail)
+
+		self.expenses = expense_items
+
+		if self.total != total:
+			self.total = total
+		if self.no_of_expense_items != count:
+			self.no_of_expense_items = count
+
+	def make_payment_journal_entry_old(self, settings, user):
+		# Preparing the JE: convert self details into je account details
+		accounts = []
+
+		for detail in self.expenses:            
+
+			accounts.append({  
+				'debit_in_account_currency': float(detail.amount),
+				'user_remark': str(detail.description),
+				'account': detail.expense_payable_account,
+				'project': detail.project,
+				'cost_center': detail.cost_center,
+				'party_type': self.party_type,
+				'party': self.party
+			})
+
+		# finally add the payment account detail
+
+		pay_account = ""
+
+		# require payment reference if not mode of payment isnt cash
+		if (self.mode_of_payment != "Cash" and (not 
+			self.reference or not self.payment_date)):
+			frappe.throw(
+				title="Enter Payment Reference",
+				msg="Payment Reference and Date are Required for all non-cash payments."
+			)
+		else:
+			self.clearance_date = ""
+			self.reference = ""
+
+
+		pay_account = frappe.db.get_value('Mode of Payment Account', {'parent' : self.mode_of_payment, 'company' : self.company}, 'default_account')
+		if not pay_account or pay_account == "":
+			frappe.throw(
+				title="Error",
+				msg="The selected Mode of Payment has no linked account."
+			)
+
+		accounts.append({  
+			'credit_in_account_currency': float(self.total),
+			'user_remark': str(detail.description),
+			'account': pay_account,
+			'cost_center': self.cost_center
+		})
+
+		# create the journal entry
+		je = frappe.get_doc({
+			'title': self.name + ' - Payment',
+			'doctype': 'Journal Entry',
+			'voucher_type': 'Journal Entry',
+			'posting_date': self.date,
+			'company': self.company,
+			'accounts': accounts,
+			'user_remark': self.remarks,
+			'mode_of_payment': self.mode_of_payment,
+			'cheque_date': self.payment_date,
+			'reference_date': self.payment_date,
+			'cheque_no': self.reference,
+			'pay_to_recd_from': self.party,
+			'bill_no': self.name
+		})		
+
+		return je
+
+
+	def make_single_journal_entry(self, settings, user):
+		# Preparing the JE: convert self details into je account details
+		accounts = []
+
+		for detail in self.expenses:            
+
+			accounts.append({  
+				'debit_in_account_currency': float(detail.amount),
+				'user_remark': str(detail.description),
+				'account': detail.expense_account,
+				'project': detail.project,
+				'cost_center': detail.cost_center,
+				'party_type': self.party_type,
+				'party': self.party
+			})
+
+		# finally add the payment account detail
+
+		pay_account = ""
+
+		# require payment reference if not mode of payment isnt cash
+		if (self.mode_of_payment != "Cash" and (not 
+			self.reference or not self.payment_date)):
+			frappe.throw(
+				title="Enter Payment Reference",
+				msg="Payment Reference and Date are Required for all non-cash payments."
+			)
+		else:
+			self.clearance_date = ""
+			self.reference = ""
+
+
+		pay_account = frappe.db.get_value('Mode of Payment Account', {'parent' : self.mode_of_payment, 'company' : self.company}, 'default_account')
+		if not pay_account or pay_account == "":
+			frappe.throw(
+				title="Error",
+				msg="The selected Mode of Payment has no linked account."
+			)
+
+		accounts.append({  
+			'credit_in_account_currency': float(self.total),
+			'user_remark': str(detail.description),
+			'account': pay_account,
+			'cost_center': self.cost_center
+		})
+
+		# create the journal entry
+		je = frappe.get_doc({
+			'title': self.name,
+			'doctype': 'Journal Entry',
+			'voucher_type': 'Journal Entry',
+			'posting_date': self.date,
+			'company': self.company,
+			'accounts': accounts,
+			'user_remark': self.remarks,
+			'mode_of_payment': self.mode_of_payment,
+			'cheque_date': self.payment_date or self.date,
+			'reference_date': self.payment_date or self.date,
+			'cheque_no': self.reference,
+			'pay_to_recd_from': self.party,
+			'bill_no': self.name
+		})		
+
+		return je
+
+	def make_payable_journal_entry_draft(self, settings, user):
+		# Preparing the JE for payable entry
+		accounts = []
+
+		# Add expense details
+		for detail in self.expenses:
+			accounts.append({
+				'debit_in_account_currency': float(detail.amount),
+				'user_remark': str(detail.description),
+				'account': detail.expense_account,
+				'project': detail.project,
+				'cost_center': detail.cost_center
+			})
+
+		
+		# accounts.append({
+		# 	'credit_in_account_currency': float(self.total),
+		# 	'user_remark': 'Amount payable to supplier',
+		# 	'account': detail.expense_payable_account,
+		# 	'cost_center': self.cost_center,
+		# 	'party_type': self.party_type,
+		# 	'party': self.party
+		# })
+
+		account_entries = {}
+
+		# Add payable account details
+		for detail in self.expenses:
+			account_key = (
+				detail.expense_payable_account,
+				detail.project,
+				detail.cost_center,
+				self.party_type,
+				self.party,
+			)
+			
+			if account_key in account_entries:
+				account_entries[account_key]['credit_in_account_currency'] += float(detail.amount)
+			else:
+				account_entries[account_key] = {
+					'credit_in_account_currency': float(detail.amount),
+					'user_remark': 'Amount payable to supplier',
+					'account': detail.expense_payable_account,
+					'project': detail.project,
+					'cost_center': detail.cost_center,
+					'party_type': self.party_type,
+					'party': self.party
+				}
+
+		# Create the journal entry document
+		je = frappe.get_doc({
+			'title': self.name + ' - Payable',
+			'doctype': 'Journal Entry',
+			'voucher_type': 'Journal Entry',
+			'posting_date': self.date,
+			'company': self.company,
+			'accounts': accounts,
+			'user_remark': self.remarks,
+			'mode_of_payment': self.mode_of_payment,
+			'pay_to_recd_from': self.party,
+			'bill_no': self.name
+		})
+
+		return je
+
+
+	def generate_custom_name(self):
+		# get last transaction with similar prefix and increment the number
+		# if none create this as first entry
+		last_transaction = frappe.get_all('Payment Requisition', 
+			filters={'name': ['like', f'{self.series}%']}, 
+			order_by='creation desc',
+			limit=1)
+
+		year = frappe.utils.nowdate().split('-')[0]
+
+		prefix = self.series.upper() + '-' + self.currency + '-' + year + '-'
+		
+		if last_transaction:
+			number = int(last_transaction[0].name.split('-')[-1]) + 1
+		else:
+			number = 1
+
+		number = str(number).zfill(4)		
+		name = prefix + number
+
+		return name
+
 	def before_cancel(self):
 		# cancel related journal entries
 
@@ -219,254 +579,5 @@ class PaymentRequisition(Document):
 		return je
 
 
-
-	@frappe.whitelist()
-	def workflow_validation(self, user):
-
-		wrk_state_changed = self.has_value_changed("workflow_state")
-
-		comment = None
-		if self.approval_comment:
-			comment = self.approval_comment
-
-		if wrk_state_changed:
-			if self.workflow_state not in ["Cancelled", "Rejected", "Revision Requested"]:
-				comment = None
-				
-			self.append("approval_history", {
-				"approver": user.name,
-				"full_name": user.full_name,
-				"approval_status": self.workflow_state,
-				"comment": comment
-			})
-
-	def setup_details(self, settings, user):
-		# add expenses up and set the total field
-		# add default project and cost center to expense items
-
-		total = 0
-		count = 0
-		expense_items = []
-
-		
-		for detail in self.expenses:
-			total += float(detail.amount)        
-			count += 1
-			
-			if not detail.project and self.project_name:
-				detail.project = self.project_name
-
-			if not detail.activity and self.activity:
-				detail.activity = self.activity
-			
-			if not detail.cost_center and self.cost_center:
-				detail.cost_center = self.cost_center
-
-			expense_items.append(detail)
-
-		self.expenses = expense_items
-
-		if self.total != total:
-			self.total = total
-		if self.no_of_expense_items != count:
-			self.no_of_expense_items = count
-
-	def make_payment_journal_entry_old(self, settings, user):
-		# Preparing the JE: convert self details into je account details
-		accounts = []
-
-		for detail in self.expenses:            
-
-			accounts.append({  
-				'debit_in_account_currency': float(detail.amount),
-				'user_remark': str(detail.description),
-				'account': detail.expense_payable_account,
-				'project': detail.project,
-				'cost_center': detail.cost_center,
-				'party_type': self.party_type,
-				'party': self.party
-			})
-
-		# finally add the payment account detail
-
-		pay_account = ""
-
-		# require payment reference if not mode of payment isnt cash
-		if (self.mode_of_payment != "Cash" and (not 
-			self.reference or not self.payment_date)):
-			frappe.throw(
-				title="Enter Payment Reference",
-				msg="Payment Reference and Date are Required for all non-cash payments."
-			)
-		else:
-			self.clearance_date = ""
-			self.reference = ""
-
-
-		pay_account = frappe.db.get_value('Mode of Payment Account', {'parent' : self.mode_of_payment, 'company' : self.company}, 'default_account')
-		if not pay_account or pay_account == "":
-			frappe.throw(
-				title="Error",
-				msg="The selected Mode of Payment has no linked account."
-			)
-
-		accounts.append({  
-			'credit_in_account_currency': float(self.total),
-			'user_remark': str(detail.description),
-			'account': pay_account,
-			'cost_center': self.cost_center
-		})
-
-		# create the journal entry
-		je = frappe.get_doc({
-			'title': self.name + ' - Payment',
-			'doctype': 'Journal Entry',
-			'voucher_type': 'Journal Entry',
-			'posting_date': self.date,
-			'company': self.company,
-			'accounts': accounts,
-			'user_remark': self.remarks,
-			'mode_of_payment': self.mode_of_payment,
-			'cheque_date': self.payment_date,
-			'reference_date': self.payment_date,
-			'cheque_no': self.reference,
-			'pay_to_recd_from': self.party,
-			'bill_no': self.name
-		})		
-
-		return je
-
-
-
-
-	def make_single_journal_entry(self, settings, user):
-		# Preparing the JE: convert self details into je account details
-		accounts = []
-
-		for detail in self.expenses:            
-
-			accounts.append({  
-				'debit_in_account_currency': float(detail.amount),
-				'user_remark': str(detail.description),
-				'account': detail.expense_account,
-				'project': detail.project,
-				'cost_center': detail.cost_center,
-				'party_type': self.party_type,
-				'party': self.party
-			})
-
-		# finally add the payment account detail
-
-		pay_account = ""
-
-		# require payment reference if not mode of payment isnt cash
-		if (self.mode_of_payment != "Cash" and (not 
-			self.reference or not self.payment_date)):
-			frappe.throw(
-				title="Enter Payment Reference",
-				msg="Payment Reference and Date are Required for all non-cash payments."
-			)
-		else:
-			self.clearance_date = ""
-			self.reference = ""
-
-
-		pay_account = frappe.db.get_value('Mode of Payment Account', {'parent' : self.mode_of_payment, 'company' : self.company}, 'default_account')
-		if not pay_account or pay_account == "":
-			frappe.throw(
-				title="Error",
-				msg="The selected Mode of Payment has no linked account."
-			)
-
-		accounts.append({  
-			'credit_in_account_currency': float(self.total),
-			'user_remark': str(detail.description),
-			'account': pay_account,
-			'cost_center': self.cost_center
-		})
-
-		# create the journal entry
-		je = frappe.get_doc({
-			'title': self.name,
-			'doctype': 'Journal Entry',
-			'voucher_type': 'Journal Entry',
-			'posting_date': self.date,
-			'company': self.company,
-			'accounts': accounts,
-			'user_remark': self.remarks,
-			'mode_of_payment': self.mode_of_payment,
-			'cheque_date': self.payment_date or self.date,
-			'reference_date': self.payment_date or self.date,
-			'cheque_no': self.reference,
-			'pay_to_recd_from': self.party,
-			'bill_no': self.name
-		})		
-
-		return je
-
-	def make_payable_journal_entry_draft(self, settings, user):
-		# Preparing the JE for payable entry
-		accounts = []
-
-		# Add expense details
-		for detail in self.expenses:
-			accounts.append({
-				'debit_in_account_currency': float(detail.amount),
-				'user_remark': str(detail.description),
-				'account': detail.expense_account,
-				'project': detail.project,
-				'cost_center': detail.cost_center
-			})
-
-		
-		# accounts.append({
-		# 	'credit_in_account_currency': float(self.total),
-		# 	'user_remark': 'Amount payable to supplier',
-		# 	'account': detail.expense_payable_account,
-		# 	'cost_center': self.cost_center,
-		# 	'party_type': self.party_type,
-		# 	'party': self.party
-		# })
-
-		account_entries = {}
-
-		# Add payable account details
-		for detail in self.expenses:
-			account_key = (
-				detail.expense_payable_account,
-				detail.project,
-				detail.cost_center,
-				self.party_type,
-				self.party,
-			)
-			
-			if account_key in account_entries:
-				account_entries[account_key]['credit_in_account_currency'] += float(detail.amount)
-			else:
-				account_entries[account_key] = {
-					'credit_in_account_currency': float(detail.amount),
-					'user_remark': 'Amount payable to supplier',
-					'account': detail.expense_payable_account,
-					'project': detail.project,
-					'cost_center': detail.cost_center,
-					'party_type': self.party_type,
-					'party': self.party
-				}
-
-		# Create the journal entry document
-		je = frappe.get_doc({
-			'title': self.name + ' - Payable',
-			'doctype': 'Journal Entry',
-			'voucher_type': 'Journal Entry',
-			'posting_date': self.date,
-			'company': self.company,
-			'accounts': accounts,
-			'user_remark': self.remarks,
-			'mode_of_payment': self.mode_of_payment,
-			'pay_to_recd_from': self.party,
-			'bill_no': self.name
-		})
-
-		return je
 def ep(param):
 	frappe.errprint(param)
