@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "conversion_rate",
- "color": "#ffb0b0",
+ "color": "#ff9999",
  "creation": "2024-08-26 16:36:15.786512",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -12,7 +12,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Pending Payment Approvals",
- "modified": "2024-08-26 20:31:20.722221",
+ "modified": "2024-08-27 00:36:30.572806",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Pending Payment Approvals",
