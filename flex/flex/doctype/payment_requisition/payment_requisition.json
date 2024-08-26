@@ -241,7 +241,6 @@
    "fieldtype": "Currency",
    "label": "Total Payment",
    "no_copy": 1,
-   "non_negative": 1,
    "options": "currency",
    "precision": "2",
    "read_only": 1
@@ -477,7 +476,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-24 12:41:43.399119",
+ "modified": "2024-08-26 15:46:28.899303",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
