@@ -109,9 +109,10 @@ class PaymentRequisition(Document):
 	def update_signatories(self, user):		
 		# check_attachments
 		
-		if not self.raised_by and self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Quotations Required", "Revision Requested", "Employee Revision Required"]:
+		if self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Quotations Required", "Revision Requested", "Employee Revision Required"]:
 			owner = frappe.get_doc("User", self.owner)
-			self.raised_by = owner.full_name
+			if not self.raised_by:
+				self.raised_by = owner.full_name
 
 			self.submitted_by = "Pending"
 			self.checked_by = "Pending"
