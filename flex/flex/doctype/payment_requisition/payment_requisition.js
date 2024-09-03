@@ -1,12 +1,6 @@
 // Copyright (c) 2024, Fabric and contributors
 // For license information, please see license.txt
 
-
-// Copyright (c) 2020, Bantoo and contributors
-// For license information, please see license.txt
-
-// frappe.provide("expense_entry.expense_entry");
-
 function update_totals(frm, cdt, cdn){
 	var items = locals[cdt][cdn];
     var total = 0;
@@ -41,6 +35,7 @@ frappe.ui.form.on('Expense Entry Item', {
             }
         }
 	}
+	
 	
 });
 
@@ -171,6 +166,7 @@ function set_expense_items(frm) {
 
 
 function warn_if_quotations_are_absent(frm) {
+	// prompts the user to confirm if they want to proceed without quotations
 	const action = frm.selected_workflow_action;
 	if (['Request Executive Approval', 'Quotations Required'].includes(action) && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
 		frappe.dom.unfreeze(); // Unfreeze the screen to allow user interaction
@@ -189,6 +185,7 @@ function warn_if_quotations_are_absent(frm) {
 }
 
 function validate_quotations(frm) {
+	// prevents user from submitting the form without all the quotations if allow_incomplete_quotations is not checked
 	if (['Quotations Required', 'Submitted to Accounts', 'Ready for Submission'].includes(frm.doc.workflow_state)) {
 		if (frm.doc.allow_incomplete_quotations === 0 && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
 			frappe.dom.unfreeze();
@@ -198,68 +195,64 @@ function validate_quotations(frm) {
 }
 
 function verify_workflow_action(frm) {
-	const action = frm.selected_workflow_action;
+    const action = frm.selected_workflow_action;
 
-	if (['Reject', 'Cancel', 'Request Revision', 'Request Employee Revision'].includes(action)) {
-		// frappe.dom.unfreeze(); // Unfreeze the screen to allow user interaction
-		
-		return new Promise((resolve, reject) => {
-			frappe.prompt(
-				{
-					fieldtype: 'Small Text',
-					fieldname: 'approval_comment',
-					label: __('Please provide a reason for this action'),
-					reqd: 1,
-					height: '10em'
-				},
-				data => {
-					if (data.approval_comment) {
-						frappe.call({
-							method: "frappe.client.set_value",
-							args: {
-								doctype: frm.doc.doctype,
-								name: frm.doc.name,
-								fieldname: 'approval_comment',
-								value: data.approval_comment
-							},
-							callback: function(response) {
-								if (response.message) {
-									resolve(response.message);
-								} else {
-									return false;
-								}
-							}
-						});
-					} else {
-						return false;
-					}
-				},
-				__('This action requires a comment'),
-				__('Submit'),
-				() => {
-					return false; // Reject if the dialog is dismissed
-				}
-			);
-		});
-	}
+    return new Promise((resolve, reject) => {
+        frappe.dom.unfreeze(); // Unfreeze the form
 
-	if (['Approve', 'Request Approval'].includes(action)) {
-		frappe.dom.unfreeze(); // Unfreeze the screen to allow user interaction
-		return new Promise((resolve, reject) => {
-			frappe.confirm(
-				'Are you sure you want to <strong>' + action.toLowerCase() + '</strong>?',
-				function() {
-					resolve();
-				},
-				function() {
-					return false;
-				}
-			);
-		});
-	}
+        if (['Approve', 'Request Approval', 'Submit', 'Request Executive Approval'].includes(action)) {
+            frappe.confirm(
+                'Are you sure you want to <strong>' + action.toLowerCase() + '</strong>?',
+                () => {
+                    resolve();
+                },
+                () => {
+                    reject(new Error("Action cancelled by user"));
+                }
+            );
+        } else if (['Reject', 'Cancel', 'Request Revision', 'Request Employee Revision'].includes(action)) {
+            console.log(3, "Reject/Cancel/Request Revision", action);
+            
+            frappe.prompt(
+                {
+                    fieldtype: 'Small Text',
+                    fieldname: 'approval_comment',
+                    label: __('Please provide a reason for this action'),
+                    reqd: 1,
+                    height: '10em'
+                }, 
+                data => {
+                    if (data.approval_comment) {
+                        frappe.call({
+                            method: "frappe.client.set_value",
+                            args: {
+                                doctype: frm.doc.doctype,
+                                name: frm.doc.name,
+                                fieldname: 'approval_comment',
+                                value: data.approval_comment
+                            },
+                            callback: function(response) {
+                                if (response.message) {
+                                    resolve();
+                                } else {
+                                    reject(new Error('Failed to set approval comment'));
+                                }
+                            }
+                        });
+                    } else {
+                        frappe.validated = false;
+                        reject(new Error("No comment provided"));
+                    }
+                }, 
+                __('This action requires a comment'), 
+                __('Submit')
+            );
+        } else {
+            // For actions that don't require confirmation
+            resolve();
+        }
 
-	// For actions that don't require confirmation, resolve immediately
-	return Promise.resolve();
+    });
 }
 
 frappe.ui.form.on("Payment Requisition", {
@@ -268,11 +261,17 @@ frappe.ui.form.on("Payment Requisition", {
 		// Workflow Action message capture and action verification 
 
 
-        verify_workflow_action(frm);
-		warn_if_quotations_are_absent(frm);
-		validate_quotations(frm);
-        set_expense_items(frm);		
-		execute_workflow_from_server(frm);
+        
+		try {
+            await warn_if_quotations_are_absent(frm);
+            validate_quotations(frm);
+            await verify_workflow_action(frm);
+            // If all checks pass, the workflow action can proceed
+        } catch (error) {
+            console.log(error.message);
+            frappe.validated = false;
+			frappe.throw()
+        }
 		
 		// if (frm.doc.workflow_state === 'Quotations Required' && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
         //     frappe.dom.unfreeze(); // Unfreeze the screen to allow user interaction  
@@ -292,9 +291,8 @@ frappe.ui.form.on("Payment Requisition", {
 		frm.toggle_display("conversion_rate", frm.doc.currency !== company_currency);
 		check_currency(frm, company_currency);
 	},
-    before_save: function(frm) {
-
-		
+    validate: function(frm) {
+        set_expense_items(frm);		
         
     },
 	onload: function(frm) {

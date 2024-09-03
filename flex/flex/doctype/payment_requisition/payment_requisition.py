@@ -27,7 +27,6 @@ class PaymentRequisition(Document):
 		settings = frappe.get_single("Payment Requisition Settings")
 		user = frappe.get_doc("User", frappe.session.user)
 
-		self.workflow_setup(user)
 		self.setup_expense_details(settings, user)
 
 		if self.workflow_state in ["Awaiting Internal Approval", "Ready for Submission"]:
@@ -91,12 +90,10 @@ class PaymentRequisition(Document):
 				return True
 		return False
 
-	def workflow_setup(self, user):
-		
-		if self.has_value_changed("workflow_state"):
-			if self.workflow_state not in ["Approved", "Payment Completed"]:
-				self.approval_comment = None
-				
+	def workflow_log(self, user):
+
+		workflow_changed = self.has_value_changed("workflow_state")
+		if workflow_changed:					
 			self.append("approval_history", {
 				"approver": user.name,
 				"full_name": user.full_name,
@@ -104,14 +101,20 @@ class PaymentRequisition(Document):
 				"comment": self.approval_comment
 			})
 
-			self.update_signatories(user)
+		if self.workflow_state not in ["Approved", "Payment Completed"]:
+			self.approval_comment = None
+		
+		# self.update_signatories(user)
 
-	def update_signatories(self, user):		
+	def before_save(self):		
 		# check_attachments
+		user = frappe.get_doc("User", frappe.session.user)
+		# frappe.errprint(self.workflow_state + " " + str("update_signatories"))
 		
 		if self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Quotations Required", "Revision Requested", "Employee Revision Required"]:
-			owner = frappe.get_doc("User", self.owner)
+			# frappe.errprint(self.workflow_state + " " + str("Pending"))
 			if not self.raised_by:
+				owner = frappe.get_doc("User", self.owner)
 				self.raised_by = owner.full_name
 
 			self.submitted_by = "Pending"
@@ -123,7 +126,7 @@ class PaymentRequisition(Document):
 			# if self.allow_incomplete_quotations == 0 and not self.first_quotation or not self.second_quotation or not self.third_quotation:
 			# 	frappe.throw("Please upload all quotations or specify that incomplete quotations are allowed.")
 
-			if self.user_has_role(user, ["Accounts User", "Accounts Manager"]) and self.submitted_by != user.full_name:
+			if self.user_has_role(user, ["Accounts User", "Accounts Manager"]) and self.submitted_by == "Pending":
 				self.submitted_by = user.full_name
 				
 
@@ -131,7 +134,7 @@ class PaymentRequisition(Document):
 			if not self.submitted_by or self.submitted_by != user.full_name:
 				self.submitted_by = user.full_name
 
-		if self.workflow_state in ["Awaiting Director Approval (1)"]:
+		if self.workflow_state == "Awaiting Director Approval (1)":
 			self.checked_by = user.full_name
 
 		if self.workflow_state == "Awaiting Director Approval (2)":
@@ -142,6 +145,9 @@ class PaymentRequisition(Document):
 
 		# frappe.msgprint(self.workflow_state + " user: " + user.full_name)
 		# print(self.workflow_state + " user: " + user.full_name)
+		# frappe.db.cmmit()
+		self.workflow_log(user)
+
 		
 		
 
