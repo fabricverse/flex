@@ -20,39 +20,66 @@ class PaymentRequisition(Document):
 		# 		frappe.throw("Please upload all quotations or tick the <strong>Allow Incomplete Quotations</strong> checkbox. " + str(self.allow_incomplete_quotations))
 	
 	@frappe.whitelist()
-	def execute_workflow(self):
+	def apply_workflow(self, user):
+	
 		if len(self.expenses) < 1:
 			return
-
 		settings = frappe.get_single("Payment Requisition Settings")
-		user = frappe.get_doc("User", frappe.session.user)
 
 		self.setup_expense_details(settings, user)
 
-		if self.workflow_state in ["Awaiting Internal Approval", "Ready for Submission"]:
+		if self.workflow_state in ["Awaiting Internal Approval"]:
 			self.payment_date = None
 			self.reference = None
 
-		if self.workflow_state == "Approved":
-			# create journal entry without payable entry
-			je = self.make_journal_entry(settings, user)
-			# self.payment_journal_entry = je.name
-			self.approval_comment = None
-			if not self.payment_date: # and self.docstatus == 0: 
-				# make sure to validate payment reference and date correctly on the form
+		if self.workflow_state == "Approved" and not self.payable_journal_entry:
+			if settings.skip_payable_journal_entry == 0:
+				# Create payable journal entry
+				je = self.make_payable_journal_entry(settings, user)
+				je.insert()
+				je.submit()
 				self.payable_journal_entry = je.name
-			elif self.payment_date:
-				self.payment_journal_entry = je.name
-				self.workflow_state = "Payment Completed"				
+			self.approval_comment = None				
 			
 		elif self.workflow_state == "Cancelled":
 			# cancel related journal entries
 			self.before_cancel()
 			if self.docstatus != 2:
 				self.docstatus = 2
+
+	def on_change(self):
+		if self.payment_journal_entry: return
+
+		if self.workflow_state == "Approved" and self.payment_date:
+			settings = frappe.get_single("Payment Requisition Settings")
+			user = frappe.get_doc("User", frappe.session.user)
+
+			if self.mode_of_payment == "Cash" or (self.mode_of_payment != "Cash" and self.reference):
+				self.create_payment_journal_entry(settings, user)
+				
+			elif not self.reference:
+				frappe.throw("{} is required for non-cash payments.".format(frappe.bold("Payment Reference")))
+
+		if self.workflow_state == "Approved" and self.docstatus == 0:
+			self.submit()	
 		
-		# self.apply_signature(self, user)
+
+	def create_payment_journal_entry(self, settings, user):
+		if settings.skip_payable_journal_entry == 1:
+			# Create single journal entry for both expense and payment
+			je = self.make_single_journal_entry(settings, user)
+		else:
+			# Create payment journal entry
+			je = self.make_payment_journal_entry(settings, user)
 		
+		je.insert()
+		je.submit()
+
+		self.db_set({
+			"payment_journal_entry": je.name,
+			"workflow_state": "Payment Completed"
+		})
+		frappe.db.commit()
 
 
 	def apply_signature(self, user):
@@ -106,9 +133,11 @@ class PaymentRequisition(Document):
 		
 		# self.update_signatories(user)
 
-	def before_save(self):		
-		# check_attachments
+	def validate(self):		
 		user = frappe.get_doc("User", frappe.session.user)
+		self.apply_workflow(user)
+
+		
 		# frappe.errprint(self.workflow_state + " " + str("update_signatories"))
 		
 		if self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Quotations Required", "Revision Requested", "Employee Revision Required"]:
@@ -231,7 +260,7 @@ class PaymentRequisition(Document):
 		})
 
 		# create the journal entry
-		je = frappe.get_doc({
+		je_data = {
 			'title': self.name + ' - Payment',
 			'doctype': 'Journal Entry',
 			'voucher_type': 'Journal Entry',
@@ -240,12 +269,19 @@ class PaymentRequisition(Document):
 			'accounts': accounts,
 			'user_remark': self.remarks,
 			'mode_of_payment': self.mode_of_payment,
-			'cheque_date': self.payment_date,
-			'reference_date': self.payment_date,
-			'cheque_no': self.reference,
 			'pay_to_recd_from': self.party,
 			'bill_no': self.name
-		})		
+		}
+
+		# add cheque no and date if mode of payment is not cash
+		if self.mode_of_payment != "Cash":
+			je_data.update({
+				'cheque_date': self.payment_date,
+				'reference_date': self.payment_date,
+				'cheque_no': self.reference
+			})
+
+		je = frappe.get_doc(je_data)
 
 		return je
 
@@ -297,8 +333,8 @@ class PaymentRequisition(Document):
 		})
 
 		# create the journal entry
-		je = frappe.get_doc({
-			'title': self.name,
+		je_data = {
+			'title': self.name + ' - Payment',
 			'doctype': 'Journal Entry',
 			'voucher_type': 'Journal Entry',
 			'posting_date': self.date,
@@ -306,12 +342,19 @@ class PaymentRequisition(Document):
 			'accounts': accounts,
 			'user_remark': self.remarks,
 			'mode_of_payment': self.mode_of_payment,
-			'cheque_date': self.payment_date or self.date,
-			'reference_date': self.payment_date or self.date,
-			'cheque_no': self.reference,
 			'pay_to_recd_from': self.party,
 			'bill_no': self.name
-		})		
+		}
+
+		# add cheque no and date if mode of payment is not cash
+		if self.mode_of_payment != "Cash":
+			je_data.update({
+				'cheque_date': self.payment_date,
+				'reference_date': self.payment_date,
+				'cheque_no': self.reference
+			})
+
+		je = frappe.get_doc(je_data)
 
 		return je
 
@@ -384,6 +427,9 @@ class PaymentRequisition(Document):
 	def generate_custom_name(self):
 		# get last transaction with similar prefix and increment the number
 		# if none create this as first entry
+		if not self.series:
+			frappe.throw("{} is required.".format(frappe.bold("Series")))
+
 		last_transaction = frappe.get_all('Payment Requisition', 
 			filters={'name': ['like', f'{self.series}%']}, 
 			order_by='creation desc',
@@ -416,6 +462,7 @@ class PaymentRequisition(Document):
 		frappe.db.commit()
 
 	def make_journal_entry(self, settings, user):
+		pass # todo: remove def
 		je = []
 
 		if settings.skip_payable_journal_entry == 1:
@@ -566,8 +613,8 @@ class PaymentRequisition(Document):
 			'cost_center': self.cost_center
 		})
 
-		# Create the journal entry document
-		je = frappe.get_doc({
+		# create the journal entry
+		je_data = {
 			'title': self.name + ' - Payment',
 			'doctype': 'Journal Entry',
 			'voucher_type': 'Journal Entry',
@@ -576,12 +623,19 @@ class PaymentRequisition(Document):
 			'accounts': accounts,
 			'user_remark': self.remarks,
 			'mode_of_payment': self.mode_of_payment,
-			'cheque_date': self.payment_date,
-			'reference_date': self.payment_date,
-			'cheque_no': self.reference,
 			'pay_to_recd_from': self.party,
 			'bill_no': self.name
-		})
+		}
+
+		# add cheque no and date if mode of payment is not cash
+		if self.mode_of_payment != "Cash":
+			je_data.update({
+				'cheque_date': self.payment_date,
+				'reference_date': self.payment_date,
+				'cheque_no': self.reference
+			})
+
+		je = frappe.get_doc(je_data)
 
 		return je
 
