@@ -347,7 +347,7 @@ frappe.ui.form.on("Payment Requisition", {
 	// },
 
 	show_general_ledger: function(frm) {
-		if (frm.doc.docstatus > 0) {
+		if (frm.doc.workflow_state === "Payment Completed") {
 			frm.add_custom_button(
 				__("Ledger"),
 				function () {
