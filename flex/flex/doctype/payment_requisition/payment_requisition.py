@@ -120,7 +120,13 @@ class PaymentRequisition(Document):
 	def workflow_log(self, user):
 
 		workflow_changed = self.has_value_changed("workflow_state")
-		if workflow_changed:					
+		if workflow_changed:
+			if len(self.approval_history) < 1:
+				if not self.workflow_state:
+					if self.user_has_role(user, ["Accounts User", "Accounts Manager"]):
+						self.workflow_state = "Submitted to Accounts"
+					else:
+						self.workflow_state = "Quotations Required"
 			self.append("approval_history", {
 				"approver": user.name,
 				"full_name": user.full_name,
