@@ -136,14 +136,14 @@ function get_exchange_rate(frm, transaction_date, from_currency, company_currenc
 }
 
 function execute_workflow_from_server(frm) {
-	frappe.call({
-		method: 'execute_workflow',
-		doc: frm.doc,
-		callback: function(r) {
-			if(r.message) {
-			}
-		}
-	});
+	// frappe.call({
+	// 	method: 'before_save',
+	// 	doc: frm.doc,
+	// 	callback: function(r) {
+	// 		if(r.message) {
+	// 		}
+	// 	}
+	// });
 }
 function set_expense_items(frm) {
 	$.each(frm.doc.expenses, function(i, d) { 
