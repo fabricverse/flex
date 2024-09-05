@@ -226,9 +226,7 @@ class PaymentRequisition(Document):
 				'project': detail.project,
 				'cost_center': detail.cost_center,
 				'party_type': self.party_type,
-				'party': self.party,
-				'reference_name': self.name,
-				'reference_type': 'Payment Requisition'
+				'party': self.party
 			})
 
 		# finally add the payment account detail
@@ -258,9 +256,7 @@ class PaymentRequisition(Document):
 			'credit_in_account_currency': float(self.total),
 			'user_remark': str(detail.description),
 			'account': pay_account,
-			'cost_center': self.cost_center,
-			'reference_name': self.name,
-			'reference_type': 'Payment Requisition'
+			'cost_center': self.cost_center
 		})
 
 		# create the journal entry
@@ -303,9 +299,7 @@ class PaymentRequisition(Document):
 				'project': detail.project,
 				'cost_center': detail.cost_center,
 				'party_type': self.party_type,
-				'party': self.party,
-				'reference_name': self.name,
-				'reference_type': 'Payment Requisition'
+				'party': self.party
 			})
 
 		# finally add the payment account detail
@@ -335,9 +329,7 @@ class PaymentRequisition(Document):
 			'credit_in_account_currency': float(self.total),
 			'user_remark': str(detail.description),
 			'account': pay_account,
-			'cost_center': self.cost_center,
-			'reference_name': self.name,
-			'reference_type': 'Payment Requisition'
+			'cost_center': self.cost_center
 		})
 
 		# create the journal entry
@@ -377,9 +369,7 @@ class PaymentRequisition(Document):
 				'user_remark': str(detail.description),
 				'account': detail.expense_account,
 				'project': detail.project,
-				'cost_center': detail.cost_center,
-				'reference_name': self.name,
-				'reference_type': 'Payment Requisition'
+				'cost_center': detail.cost_center
 			})
 			
 		account_entries = {}
@@ -610,9 +600,7 @@ class PaymentRequisition(Document):
 			'credit_in_account_currency': float(self.total),
 			'user_remark': str(self.remarks),
 			'account': pay_account,
-			'cost_center': self.cost_center,
-			'reference_name': self.name,
-			'reference_type': 'Payment Requisition'
+			'cost_center': self.cost_center
 		})
 
 		# create the journal entry
