@@ -221,6 +221,25 @@ doc_events = {
 # 	}
 # ]
 
+# Fixtures
+# --------
+fixtures = [
+    {
+        "doctype": "Workflow",
+        "filters": {
+            "document_type": ["in", ["Payment Requisition"]]
+        }
+    },
+    {
+        "doctype": "Notification",
+        "filters": {
+            "name": ["in", ["Requisition Workflow Action Required", "Payment Requisition Approval"]]
+        }
+    }
+]
+
+
+
 # Authentication and authorization
 # --------------------------------
 

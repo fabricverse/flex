@@ -326,8 +326,11 @@ frappe.ui.form.on("Payment Requisition", {
 			frm.set_value("conversion_rate", 1);
 			frm.refresh_fields();
 		}
-		// let company_currency = get_company_currency(frm.doc.company);
-		// frm.toggle_display("conversion_rate", frm.doc.currency !== company_currency);
+
+		// Hide workflow actions button for specific states
+		if (frm.doc.workflow_state === "Approved" || frm.doc.workflow_state === "Payment Completed") {
+			frm.page.clear_actions_menu();
+		}
 	},
 
 	validate_company: (frm) => {
