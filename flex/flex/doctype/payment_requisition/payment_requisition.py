@@ -22,7 +22,7 @@ class PaymentRequisition(Document):
         # 		frappe.throw("Please upload all quotations or tick the <strong>Allow Incomplete Quotations</strong> checkbox. " + str(self.allow_incomplete_quotations))
     
     @frappe.whitelist()
-    def apply_workflow(self, user):
+    def apply_workflow(self, user): # update
 
         if len(self.request_items) < 1:
             return
@@ -34,14 +34,22 @@ class PaymentRequisition(Document):
             self.payment_date = None
             self.reference = None
 
-        if self.workflow_state == "Approved" and not self.payable_journal_entry:
-            if settings.skip_payable_journal_entry == 0:
-                # Create payable journal entry
-                je = self.make_payable_journal_entry(settings, user)
+        # if self.workflow_state == "Approved" and not self.payable_journal_entry: # update
+        if self.workflow_state in ["Approved", "Payment Completed", "Quotations Required"]:
+            
+            # Create payable journal entry
+            if self.party_type == "Employee":
+                # je = self.make_employee_advance_je(settings, user)
+                je = self.make_employee_expense_je()
+            else:
+                if settings.skip_payable_journal_entry == 0:
+                    je = self.make_payable_journal_entry()
+            if je:
                 je.insert()
                 je.submit()
+
                 self.payable_journal_entry = je.name
-            self.approval_comment = None				
+                self.approval_comment = None				
             
         elif self.workflow_state == "Cancelled":
             # cancel related journal entries
@@ -49,7 +57,7 @@ class PaymentRequisition(Document):
             if self.docstatus != 2:
                 self.docstatus = 2
 
-    def on_change(self):
+    def on_change(self): # update
         if self.payment_journal_entry: return
 
         if self.workflow_state == "Approved" and self.payment_date:
@@ -460,24 +468,318 @@ class PaymentRequisition(Document):
     
         frappe.db.commit()
 
-    def make_journal_entry(self, settings, user):
-        pass # todo: remove def
-        je = []
+    # def make_journal_entry(self, settings, user):
+    #     je = []
 
-        if settings.skip_payable_journal_entry == 1:
-            je = self.make_single_journal_entry(settings, user)
-        else:
-            # Determine the type of journal entry to create
-            if not self.payment_date: # and self.docstatus == 0: 
-                # make sure to validate payment reference and date correctly on the form
-                je = self.make_payable_journal_entry(settings, user)
-            elif self.payment_date:
-                je = self.make_payment_journal_entry(settings, user)
-        # frappe.errprint(je.as_dict())
-        # return	
+    #     if self.party_type == "Employee":
+    #         if self.payment_date:
+    #             je = self.make_employee_advance_je(settings, user)
+    #         else:
+    #             # check if complete amount is used up
+    #             je = self.make_employee_expense_je(settings, user)
+    #     else:
+    #         if settings.skip_payable_journal_entry == 1:
+    #             je = self.make_single_journal_entry(settings, user)
+    #         else:
+    #             # Determine the type of journal entry to create
+    #             if not self.payment_date: # and self.docstatus == 0: 
+    #                 # make sure to validate payment reference and date correctly on the form
+    #                 je = self.make_payable_journal_entry(settings, user)
+    #             elif self.payment_date:
+    #                 je = self.make_payment_journal_entry(settings, user)
+    #         # frappe.errprint(je.as_dict())
+    #         # return	
         
-        je.insert()
-        return je.submit()
+    #     je.insert()
+    #     return je.submit()
+
+    def get_employee_account(self, employee: str) -> str:
+        """Retrieve or create an account for the specified employee.
+
+        Checks if an account exists for the employee under "Employee Accounts".
+        If not, creates a new account under "Current Assets".
+
+        Args:
+            employee (str): Employee's name.
+
+        Returns:
+            str: Employee's account name.
+
+        Raises:
+            frappe.exceptions.ValidationError: If account creation fails.
+
+        Side Effects:
+            - May create "Employee Accounts" under "Current Assets".
+            - May create a new employee account.
+            - Displays account creation messages.
+
+        Example:
+            account_name = self.get_employee_account("John Doe")
+        """
+
+        employee_account = frappe.get_all('Account', filters={'parent_account': ['like', '%Employee Accounts%'], 'account_name': ['like', f'%{employee}']}, limit=1)
+
+        if employee_account:
+            employee_account = employee_account[0].name
+        else:
+            parent_account_number = "1125"
+            parent = frappe.get_all('Account', filters={'account_name': ['like', '%Employee Accounts%'], 'parent_account': ['like', '%Current Assets%']}, limit=1)
+
+            if not parent:
+                root_account = frappe.get_all('Account', filters={'account_name': ['like', '%Current Assets%']}, limit=1)
+                frappe.errprint(f"root account {root_account}")
+
+                parent = frappe.new_doc("Account")
+
+                parent.account_name = "Employee Accounts"
+                parent.account_number = parent_account_number
+                parent.parent_account = root_account[0].name
+                parent.is_group = 1
+                parent.root_type = "Asset"
+                parent.report_type = "Balance Sheet"
+                parent.account_type = "Cash"
+                parent.company = self.company
+                parent.insert(ignore_permissions=True)
+
+                frappe.msgprint(f"New account group: {frappe.bold(parent.name)}", indicator='blue', alert=True)
+
+                parent = parent.name
+            else:
+                parent = parent[0].name            
+
+            employee_accounts = frappe.get_all('Account', filters={'parent_account': ['like', f'%{parent} -']}, limit=0)            
+            new_account_number = int(parent_account_number) + len(employee_accounts) + 1
+
+            account = frappe.new_doc("Account")            
+            account.account_type = "Cash"
+            account.root_type = "Asset"
+            account.report_type = "Balance Sheet"
+            account.account_name = employee
+            account.account_number = new_account_number
+            account.parent_account = parent
+            account.insert(ignore_permissions=True)
+            
+            employee_account = account.name
+            frappe.msgprint(f"Created employee account {frappe.bold(employee_account)}", indicator='blue', alert=True)
+
+        return employee_account
+    
+
+    def make_employee_advance_je(self):
+        """
+        Create a Journal Entry for an employee advance.
+
+        This method prepares a journal entry for an advance payment to an employee.
+        It validates the mode of payment and ensures that a payment reference and date
+        are provided for non-cash payments. It retrieves or creates the necessary accounts
+        and constructs the journal entry data.
+
+        Returns:
+            frappe.Document: A Journal Entry document ready for insertion and submission.
+
+        Raises:
+            frappe.exceptions.ValidationError: If the mode of payment lacks a linked account
+            or if required payment reference details are missing.
+
+        Side Effects:
+            - May throw an error if validation fails.
+            - Constructs a journal entry document.
+
+        Example:
+            je = self.make_employee_advance_je()
+            je.insert()
+            je.submit()
+        """
+        pay_account = frappe.db.get_value('Mode of Payment Account', {
+                'parent': self.mode_of_payment, 
+                'company': self.company
+            },
+            'default_account'
+        )
+        if not pay_account or pay_account == "":
+            frappe.throw(
+                title="Account Required in Mode of Payment",
+                msg="The selected Mode of Payment has no linked account."
+            )
+
+        employee_account = self.get_employee_account(self.party)
+        accounts = [
+            {
+                'debit_in_account_currency': float(self.total) * self.conversion_rate,
+                'user_remark': str(self.remarks or ""),
+                'account': employee_account,
+                'cost_center': self.cost_center,
+                'exchange_rate': self.conversion_rate,
+                'party_type': self.party_type,
+                'party': self.party,
+                'project': self.project_name
+            },
+            {
+                'credit_in_account_currency': float(self.total) * self.conversion_rate,
+                'user_remark': str(self.remarks or ""),
+                'exchange_rate': self.conversion_rate,
+                'account': pay_account,
+                'cost_center': self.cost_center
+            }
+        ]
+
+        # Finally, add the payment account detail
+        if self.mode_of_payment != "Cash" and (not self.reference or not self.payment_date):
+            frappe.throw(
+                title="Enter Payment Reference",
+                msg="Payment Reference and Date are Required for all non-cash payments."
+            )
+
+        # add journal entry data
+        je_data = {
+            'title': self.name + ' - Advance',
+            'doctype': 'Journal Entry',
+            'voucher_type': 'Journal Entry',
+            'posting_date': self.payment_date,
+            'company': self.company,
+            'accounts': accounts,
+            'user_remark': self.remarks,
+            'mode_of_payment': self.mode_of_payment,
+            'pay_to_recd_from': self.party,
+            'bill_no': self.name
+        }
+
+        # add cheque no and date if mode of payment is not cash
+        if self.mode_of_payment != "Cash":
+            je_data.update({
+                'cheque_date': self.payment_date,
+                'reference_date': self.payment_date,
+                'cheque_no': self.reference
+            })
+
+        je = frappe.get_doc(je_data)
+
+        return je
+    
+    def make_employee_expense_je(self):
+        """
+        Create a Journal Entry for employee expenses.
+
+        This method prepares a journal entry for expenses incurred by an employee.
+        It validates that the total expenditure and deposit amount match the requisitioned amount.
+        It retrieves or creates the necessary accounts and constructs the journal entry data.
+
+        Returns:
+            Object: A Journal Entry document ready for insertion and submission.
+
+        Raises:
+            frappe.exceptions.ValidationError: If the total expenditure and deposit amount
+            do not match the requisitioned amount, or if the mode of payment lacks a linked account.
+
+        Side Effects:
+            - May throw an error if validation fails.
+            - Constructs a journal entry document.
+
+        Example:
+            je = self.make_employee_expense_je()
+            je.insert()
+            je.submit()
+        """
+
+        # validations
+        if (self.total_expenditure + self.deposit_amount) != self.total:
+            if self.total > (self.total_expenditure + self.deposit_amount):
+                frappe.throw(
+                    title="Incomplete Expenditure", 
+                    msg=f"""Total expenditure + Deposit amount ({frappe.bold(str(self.total_expenditure + self.deposit_amount) + self.currency)}) 
+                        cannot be less than the requisitioned amount ({frappe.bold(str(self.total) + self.currency)}). 
+                        You can deposit the remaining amount if you spent less."""
+                )
+            
+            if self.total < (self.total_expenditure + self.deposit_amount):
+                frappe.throw(
+                    title="Overspend",
+                    msg="Total Expenditure (and Deposited Amount) cannot exceed the requisitioned amount."
+                )
+        
+        pay_account = frappe.db.get_value('Mode of Payment Account', {
+                'parent': self.mode_of_payment, 
+                'company': self.company
+            },
+            'default_account')
+
+        if not pay_account or pay_account == "":
+            frappe.throw(
+                title="Account Required in Mode of Payment",
+                msg="The selected Mode of Payment has no linked account."
+            )
+
+        employee_account = self.get_employee_account(self.party)
+
+        # add employee account detail from which the expense is incurred
+        accounts = [
+            {
+                'credit_in_account_currency': float(self.total) * self.conversion_rate,
+                'exchange_rate': self.conversion_rate,                
+                'account': employee_account,
+                'project': self.project_name,
+                'cost_center': self.cost_center,
+                'party_type': self.party_type,
+                'party': self.party
+            }
+        ]
+
+        # add expense details
+        for detail in self.expense_items:
+            accounts.append({
+                'debit_in_account_currency': float(detail.amount) * self.conversion_rate,
+                'exchange_rate': self.conversion_rate,
+                'user_remark': str(detail.description),
+                'account': detail.expense_account,
+                'project': detail.project,
+                'cost_center': detail.cost_center
+            })
+        
+        # add deposit of unspent amount
+        if self.deposit_amount > 0:
+            accounts.append({
+                'debit_in_account_currency': float(self.deposit_amount) * self.conversion_rate,
+                'user_remark': "Deposit of unspent amount",
+                'exchange_rate': self.conversion_rate,
+                'account': pay_account,
+                'cost_center': self.cost_center,
+                'party': self.party,
+                'party_type': self.party_type,
+                'project': self.project_name
+            })
+
+        # Finally, add the payment account detail
+        if self.mode_of_payment != "Cash" and (not self.reference or not self.payment_date):
+            frappe.throw(
+                title="Enter Payment Reference",
+                msg="Payment Reference and Date are Required for all non-cash payments."
+            )
+
+        # add journal entry data
+        je_data = {
+            'title': self.name + ' - Advance',
+            'doctype': 'Journal Entry',
+            'voucher_type': 'Journal Entry',
+            'posting_date': self.date,
+            'company': self.company,
+            'accounts': accounts,
+            'user_remark': self.remarks,
+            'mode_of_payment': self.mode_of_payment,
+            'pay_to_recd_from': self.party,
+            'bill_no': self.name
+        }
+
+        # add cheque no and date if mode of payment is not cash
+        if self.mode_of_payment != "Cash":
+            je_data.update({
+                'cheque_date': self.payment_date,
+                'reference_date': self.payment_date,
+                'cheque_no': self.reference
+            })
+
+        je = frappe.get_doc(je_data)
+
+        return je
     
     def make_payable_journal_entry(self, settings, user):
         # Preparing the JE for payable entry
@@ -751,3 +1053,5 @@ def make_payment_requisition(source_name, target_doc=None, args=None):
     )
 
     return doclist
+
+

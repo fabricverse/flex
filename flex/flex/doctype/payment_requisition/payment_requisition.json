@@ -41,6 +41,7 @@
   "total",
   "section_break_keaa",
   "expense_items",
+  "skip_proof",
   "section_break_ojaw",
   "column_break_zwbj",
   "column_break_ztdz",
@@ -517,6 +518,7 @@
    "read_only": 1
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "expense_items",
    "fieldtype": "Table",
    "label": "Expenditure",
@@ -528,12 +530,19 @@
    "label": "Requested Items",
    "options": "Expense Entry Item",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "skip_proof",
+   "fieldtype": "Check",
+   "label": "Save Without Proof of Expense",
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-22 10:43:30.682865",
+ "modified": "2024-10-23 14:24:52.600890",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",

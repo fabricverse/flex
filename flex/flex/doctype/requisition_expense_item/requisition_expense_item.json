@@ -105,13 +105,13 @@
    "fieldtype": "Attach",
    "in_standard_filter": 1,
    "label": "Proof of Expense",
-   "reqd": 1
+   "mandatory_depends_on": "eval: parent.skip_proof === 0"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-22 09:21:58.265118",
+ "modified": "2024-10-23 14:27:59.585589",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Requisition Expense Item",

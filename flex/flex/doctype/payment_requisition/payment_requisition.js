@@ -47,8 +47,11 @@ frappe.ui.form.on("Payment Requisition", {
 			function() {
 				// Deposit the remainder of the requisition amount to the bank account
 				// Refresh the field to show the updated table
-				frm.set_value("deposit_amount", frm.doc.total - frm.doc.total_expenditure);
-				
+				let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
+				if (deposit_amount <= 0) {
+					deposit_amount = 0;
+				}
+				frm.set_value("deposit_amount", deposit_amount);
 				frm.refresh_field("expense_items");
 				frm.refresh_field("deposit_amount");
 			}
