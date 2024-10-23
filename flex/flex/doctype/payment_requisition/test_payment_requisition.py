@@ -53,7 +53,7 @@ class TestPaymentRequisition(FrappeTestCase):
 
 		 # Create test Expense Item if it doesn't exist
 		if not frappe.db.exists("Expense Item", "Test Expense Item"):
-			self.expense_item = frappe.get_doc({
+			self.request_items = frappe.get_doc({
 				"doctype": "Expense Item",
 				"item_name": "Test Expense Item",
 				"description": "This is a test expense item",
@@ -62,7 +62,7 @@ class TestPaymentRequisition(FrappeTestCase):
 				"use_default_payable_account": 0
 			}).insert()
 		else:
-			self.expense_item = frappe.get_doc("Expense Item", "Test Expense Item")
+			self.request_items = frappe.get_doc("Expense Item", "Test Expense Item")
 
 	def tearDown(self):
 		# Clean up test data
@@ -73,7 +73,7 @@ class TestPaymentRequisition(FrappeTestCase):
 		# frappe.delete_doc("Account", self.expense_account.name)
 		# frappe.delete_doc("Mode of Payment", self.mode_of_payment.name)
 		# frappe.delete_doc("Company", self.company.name)
-		# frappe.delete_doc("Expense Item", self.expense_item.name)
+		# frappe.delete_doc("Expense Item", self.request_items.name)
 
 	def test_payment_requisition_creation(self):
 		pr = frappe.get_doc({
@@ -86,9 +86,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -99,7 +99,7 @@ class TestPaymentRequisition(FrappeTestCase):
 		pr.insert()
 
 		self.assertEqual(pr.total, 1000)
-		self.assertEqual(pr.no_of_expense_items, 1)
+		self.assertEqual(pr.total_qty, 1)
 		self.assertEqual(pr.workflow_state, "Quotations Required")
 
 	def test_payment_requisition_workflow(self):
@@ -113,9 +113,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -161,9 +161,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"conversion_rate": 1.2,
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -185,7 +185,7 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": []
+			"request_items": []
 		})
 
 		with self.assertRaises(frappe.ValidationError):
@@ -204,9 +204,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -238,9 +238,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -270,9 +270,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -310,9 +310,9 @@ class TestPaymentRequisition(FrappeTestCase):
 				"currency": "USD",
 				"cost_center": self.cost_center.name,
 				"mode_of_payment": self.mode_of_payment.name,
-				"expenses": [
+				"request_items": [
 					{
-						"expense_item": self.expense_item.name,
+						"expense_item": self.request_items.name,
 						"expense_account": self.expense_account.name,
 						"cost_center": self.cost_center.name,
 						"amount": 1000,
@@ -404,9 +404,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -458,9 +458,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -516,9 +516,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -557,9 +557,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -592,9 +592,9 @@ class TestPaymentRequisition(FrappeTestCase):
 		# 	"currency": "USD",
 		# 	"cost_center": self.cost_center.name,
 		# 	"mode_of_payment": self.mode_of_payment.name,
-		# 	"expenses": [
+		# 	"request_items": [
 		# 		{
-		# 			"expense_item": self.expense_item.name,
+		# 			"expense_item": self.request_items.name,
 		# 			"expense_account": self.expense_account.name,
 		# 			"cost_center": self.cost_center.name,
 		# 			"amount": 1000,
@@ -626,9 +626,9 @@ class TestPaymentRequisition(FrappeTestCase):
 # 			"currency": "USD",
 # 			"cost_center": self.cost_center.name,
 # 			"mode_of_payment": self.mode_of_payment.name,
-# 			"expenses": [
+# 			"request_items": [
 # 				{
-# 					"expense_item": self.expense_item.name,
+# 					"expense_item": self.request_items.name,
 # 					"expense_account": self.expense_account.name,
 # 					"cost_center": self.cost_center.name,
 # 					"amount": 1000,
@@ -658,9 +658,9 @@ class TestPaymentRequisition(FrappeTestCase):
 # 			"currency": "USD",
 # 			"cost_center": self.cost_center.name,
 # 			"mode_of_payment": self.mode_of_payment.name,
-# 			"expenses": [
+# 			"request_items": [
 # 				{
-# 					"expense_item": self.expense_item.name,
+# 					"expense_item": self.request_items.name,
 # 					"expense_account": self.expense_account.name,
 # 					"cost_center": self.cost_center.name,
 # 					"amount": 1000,
@@ -698,9 +698,9 @@ class TestPaymentRequisition(FrappeTestCase):
 # 				"currency": "USD",
 # 				"cost_center": self.cost_center.name,
 # 				"mode_of_payment": self.mode_of_payment.name,
-# 				"expenses": [
+# 				"request_items": [
 # 					{
-# 						"expense_item": self.expense_item.name,
+# 						"expense_item": self.request_items.name,
 # 						"expense_account": self.expense_account.name,
 # 						"cost_center": self.cost_center.name,
 # 						"amount": 1000,
@@ -792,9 +792,9 @@ class TestPaymentRequisition(FrappeTestCase):
 # 			"currency": "USD",
 # 			"cost_center": self.cost_center.name,
 # 			"mode_of_payment": self.mode_of_payment.name,
-# 			"expenses": [
+# 			"request_items": [
 # 				{
-# 					"expense_item": self.expense_item.name,
+# 					"expense_item": self.request_items.name,
 # 					"expense_account": self.expense_account.name,
 # 					"cost_center": self.cost_center.name,
 # 					"amount": 1000,
@@ -846,9 +846,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
-			"expenses": [
+			"request_items": [
 				{
-					"expense_item": self.expense_item.name,
+					"expense_item": self.request_items.name,
 					"expense_account": self.expense_account.name,
 					"cost_center": self.cost_center.name,
 					"amount": 1000,
@@ -907,9 +907,9 @@ class TestPaymentRequisition(FrappeTestCase):
 	# 		"currency": "USD",
 	# 		"cost_center": self.cost_center.name,
 	# 		"mode_of_payment": self.mode_of_payment.name,
-	# 		"expenses": [
+	# 		"request_items": [
 	# 			{
-	# 				"expense_item": self.expense_item.name,
+	# 				"expense_item": self.request_items.name,
 	# 				"expense_account": self.expense_account.name,
 	# 				"cost_center": self.cost_center.name,
 	# 				"amount": 1000,
@@ -948,9 +948,9 @@ class TestPaymentRequisition(FrappeTestCase):
 	# 		"currency": "USD",
 	# 		"cost_center": self.cost_center.name,
 	# 		"mode_of_payment": self.mode_of_payment.name,
-	# 		"expenses": [
+	# 		"request_items": [
 	# 			{
-	# 				"expense_item": self.expense_item.name,
+	# 				"expense_item": self.request_items.name,
 	# 				"expense_account": self.expense_account.name,
 	# 				"cost_center": self.cost_center.name,
 	# 				"amount": 1000,

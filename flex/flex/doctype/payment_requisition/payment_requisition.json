@@ -7,6 +7,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "status",
   "payment_type",
   "series",
   "column_break_mxib",
@@ -33,11 +34,18 @@
   "column_break_zdvv",
   "mode_of_payment",
   "section_break_gzgq",
-  "expenses",
+  "request_items",
   "section_break_ujtl",
-  "no_of_expense_items",
+  "total_qty",
   "column_break_gljc",
   "total",
+  "section_break_keaa",
+  "expense_items",
+  "section_break_ojaw",
+  "column_break_zwbj",
+  "column_break_ztdz",
+  "total_expenditure",
+  "deposit_amount",
   "section_break_vdvf",
   "raised_by",
   "column_break_uygv",
@@ -220,16 +228,7 @@
   },
   {
    "fieldname": "section_break_ujtl",
-   "fieldtype": "Section Break",
-   "hide_border": 1
-  },
-  {
-   "bold": 1,
-   "fieldname": "no_of_expense_items",
-   "fieldtype": "Int",
-   "label": "No. of Expense Items",
-   "no_copy": 1,
-   "read_only": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_gljc",
@@ -239,18 +238,11 @@
    "bold": 1,
    "fieldname": "total",
    "fieldtype": "Currency",
-   "label": "Total Payment",
+   "label": "Total Requested",
    "no_copy": 1,
    "options": "currency",
    "precision": "2",
    "read_only": 1
-  },
-  {
-   "fieldname": "expenses",
-   "fieldtype": "Table",
-   "label": "Request Details",
-   "options": "Expense Entry Item",
-   "reqd": 1
   },
   {
    "fetch_from": "activity.project",
@@ -311,12 +303,12 @@
   },
   {
    "allow_on_submit": 1,
-   "bold": 1,
    "fieldname": "workflow_state",
-   "fieldtype": "Data",
-   "label": "Payment Status",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Workflow State",
    "no_copy": 1,
-   "read_only": 1
+   "options": "Workflow State"
   },
   {
    "allow_on_submit": 1,
@@ -472,77 +464,82 @@
    "fieldtype": "Check",
    "label": "Allow Incomplete Quotations",
    "no_copy": 1
+  },
+  {
+   "fieldname": "total_expenditure",
+   "fieldtype": "Currency",
+   "label": "Total Expenditure",
+   "mandatory_depends_on": "eval:doc.party_type === \"Employee\"",
+   "no_copy": 1,
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Workflow State"
+  },
+  {
+   "bold": 1,
+   "fieldname": "total_qty",
+   "fieldtype": "Int",
+   "label": "Requested Qty",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_keaa",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "section_break_ojaw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_zwbj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ztdz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fieldname": "deposit_amount",
+   "fieldtype": "Currency",
+   "label": "Deposit Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expense_items",
+   "fieldtype": "Table",
+   "label": "Expenditure",
+   "options": "Requisition Expense Item"
+  },
+  {
+   "fieldname": "request_items",
+   "fieldtype": "Table",
+   "label": "Requested Items",
+   "options": "Expense Entry Item",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-27 02:08:23.223337",
+ "modified": "2024-10-22 10:43:30.682865",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
  "naming_rule": "By script",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts User",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Directors",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "if_owner": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Employee Self Service",
-   "share": 1,
-   "write": 1
-  }
- ],
+ "permissions": [],
  "show_preview_popup": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
