@@ -201,11 +201,11 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: (doc.docstatus==1 && doc.workflow_state === \"Approved\") || doc.reference",
+   "depends_on": "eval: (doc.docstatus==1 && doc.workflow_state === \"Payment Due\") //|| doc.reference",
    "fieldname": "reference",
    "fieldtype": "Data",
    "label": "Payment Reference/Cheque No",
-   "mandatory_depends_on": "eval:doc.docstatus==1 && doc.workflow_state === \"Approved\" && doc.mode_of_payment !== \"Cash\"",
+   "mandatory_depends_on": "eval:doc.docstatus==1 && doc.workflow_state === \"Payment Due\" && doc.mode_of_payment !== \"Cash\"",
    "no_copy": 1,
    "read_only_depends_on": "eval: doc.payment_journal_entry"
   },
@@ -337,11 +337,11 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: (doc.docstatus==1 && doc.workflow_state === \"Approved\") || doc.payment_date",
+   "depends_on": "eval: (doc.docstatus==1 && doc.workflow_state === \"Payment Due\") // || doc.payment_date",
    "fieldname": "payment_date",
    "fieldtype": "Date",
    "label": "Payment Date",
-   "mandatory_depends_on": "eval:doc.docstatus==1 && doc.workflow_state === \"Approved\"",
+   "mandatory_depends_on": "eval:doc.docstatus==1 && doc.workflow_state === \"Payment Due\"",
    "no_copy": 1,
    "read_only_depends_on": "eval: doc.payment_journal_entry"
   },
@@ -349,7 +349,7 @@
    "allow_on_submit": 1,
    "fieldname": "payable_journal_entry",
    "fieldtype": "Link",
-   "label": "Payable Journal Entry",
+   "label": "Supplier Payable / Employee Advance Journal Entry",
    "no_copy": 1,
    "options": "Journal Entry",
    "read_only": 1
@@ -467,10 +467,10 @@
    "no_copy": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "total_expenditure",
    "fieldtype": "Currency",
    "label": "Total Expenditure",
-   "mandatory_depends_on": "eval:doc.party_type === \"Employee\"",
    "no_copy": 1,
    "options": "currency",
    "read_only": 1
@@ -510,6 +510,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "bold": 1,
    "fieldname": "deposit_amount",
    "fieldtype": "Currency",
@@ -519,6 +520,7 @@
   },
   {
    "allow_bulk_edit": 1,
+   "allow_on_submit": 1,
    "fieldname": "expense_items",
    "fieldtype": "Table",
    "label": "Expenditure",
@@ -532,6 +534,7 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "skip_proof",
    "fieldtype": "Check",
@@ -542,7 +545,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-23 14:24:52.600890",
+ "modified": "2024-10-23 20:32:45.057395",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",

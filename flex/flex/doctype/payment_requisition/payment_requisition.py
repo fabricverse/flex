@@ -23,6 +23,19 @@ class PaymentRequisition(Document):
     
     @frappe.whitelist()
     def apply_workflow(self, user): # update
+        # if self.workflow_state == "Quotations Requireds":
+        if self.workflow_state in ["Quotations Required", "Submitted to Accounts", "Awaiting Internal Approval"]:
+            if self.workflow_state == "Quotations Required" and self.workflow_state != "Submitted to Accounts":
+                self.workflow_state = "Submitted to Accounts"
+                self.save()
+            self.workflow_state = "Awaiting Internal Approval"
+            self.save()
+            self.workflow_state = "Awaiting Director Approval (1)"
+            self.save()
+            self.workflow_state = "Awaiting Director Approval (2)"
+            self.save()
+            self.workflow_state = "Payment Due"
+            self.save()
 
         if len(self.request_items) < 1:
             return
@@ -35,12 +48,11 @@ class PaymentRequisition(Document):
             self.reference = None
 
         # if self.workflow_state == "Approved" and not self.payable_journal_entry: # update
-        if self.workflow_state in ["Approved", "Payment Completed", "Quotations Required"]:
+        if self.workflow_state == "Capture Expenses": #in ["Payment Due"]:
             
             # Create payable journal entry
             if self.party_type == "Employee":
-                # je = self.make_employee_advance_je(settings, user)
-                je = self.make_employee_expense_je()
+                je = self.make_employee_advance_je()
             else:
                 if settings.skip_payable_journal_entry == 0:
                     je = self.make_payable_journal_entry()
@@ -49,7 +61,22 @@ class PaymentRequisition(Document):
                 je.submit()
 
                 self.payable_journal_entry = je.name
-                self.approval_comment = None				
+                self.approval_comment = None
+        elif self.workflow_state == "Closed":
+            if self.party_type == "Employee":
+                je = self.make_employee_expense_je()
+            else:
+                if settings.skip_payable_journal_entry == 1:
+                    je = self.make_single_journal_entry()
+                else:
+                    je = self.make_payment_journal_entry()
+
+            if je:
+                je.insert()
+                je.submit()
+
+                self.payment_journal_entry = je.name
+                self.approval_comment = None
             
         elif self.workflow_state == "Cancelled":
             # cancel related journal entries
