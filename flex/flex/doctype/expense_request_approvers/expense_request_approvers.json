@@ -1,0 +1,31 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-07-02 11:07:17.439397",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "approvers"
+ ],
+ "fields": [
+  {
+   "fieldname": "approvers",
+   "fieldtype": "Link",
+   "label": "Approvers",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-07-18 13:07:54.947661",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Expense Request Approvers",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

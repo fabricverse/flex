@@ -1,0 +1,51 @@
+{
+ "attach_print": 0,
+ "channel": "Email",
+ "condition": "",
+ "creation": "2024-08-13 14:36:42.878463",
+ "days_in_advance": 0,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Payment Requisition",
+ "enabled": 1,
+ "event": "Save",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "",
+ "message_type": "Markdown",
+ "modified": "2024-08-13 14:37:55.225750",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Payment Requisition Approval",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "condition": "doc.workflow_state == \"Awaiting Internal Approval\"",
+   "receiver_by_role": "Executive Director"
+  },
+  {
+   "bcc": "doc.workflow_state in [\"Awaiting Internal Approval\", \"Cancelled\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
+   "condition": "doc.workflow_state in [\"Awaiting Internal Approval\", \"Cancelled\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
+   "receiver_by_role": "Accounts Manager"
+  },
+  {
+   "condition": "doc.workflow_state in [\"Awaiting Director Approval (1)\"]",
+   "receiver_by_role": "Board Director L1"
+  },
+  {
+   "bcc": "",
+   "condition": "doc.workflow_state in [\"Awaiting Director Approval (2)\"]",
+   "receiver_by_role": "Board Director L2"
+  },
+  {
+   "condition": "doc.workflow_state in [\"Cancelled\"]",
+   "receiver_by_role": "All Finance"
+  }
+ ],
+ "send_system_notification": 1,
+ "send_to_all_assignees": 0,
+ "sender": "Malaria Partners Zambia",
+ "sender_email": "erpnextafrica@gmail.com",
+ "subject": "Payment Requisition Approval - {{ doc.name }}",
+ "value_changed": "workflow_state"
+}

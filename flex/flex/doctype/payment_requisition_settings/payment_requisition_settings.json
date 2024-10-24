@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "creation": "2024-08-08 21:31:53.132714",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "skip_payable_journal_entry",
+  "accounts_section",
+  "default_payable_account"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "skip_payable_journal_entry",
+   "fieldtype": "Check",
+   "label": "Skip Payable Journal Entry"
+  },
+  {
+   "fieldname": "accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Accounts"
+  },
+  {
+   "fieldname": "default_payable_account",
+   "fieldtype": "Link",
+   "label": "Default Payable Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Liability\"],[\"Account\",\"is_group\",\"=\",0]]",
+   "options": "Account"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-08-12 15:07:16.207046",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Payment Requisition Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

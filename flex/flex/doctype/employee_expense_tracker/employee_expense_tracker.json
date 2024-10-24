@@ -1,0 +1,230 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "format:{payment_requisition}-{##}",
+ "creation": "2024-09-17 08:32:10.950874",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "payment_requisition",
+  "employee",
+  "column_break_bzwk",
+  "date",
+  "today",
+  "section_break_efer",
+  "supplier",
+  "proof_of_expense",
+  "column_break_yina",
+  "currency",
+  "section_break_nnub",
+  "activity",
+  "project",
+  "column_break_gjms",
+  "cost_center",
+  "section_break_w6xa",
+  "expenses",
+  "section_break_mmzc",
+  "total_qty",
+  "column_break_itgi",
+  "total",
+  "section_break_xidp",
+  "amended_from",
+  "column_break_gqyx",
+  "company"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_w6xa",
+   "fieldtype": "Section Break",
+   "label": "Expenses"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Employee Expense Tracker",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "expenses",
+   "fieldtype": "Table",
+   "label": "Expenses",
+   "options": "Expense Entry Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payment_requisition",
+   "fieldtype": "Link",
+   "label": "Payment Requisition",
+   "options": "Payment Requisition",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_bzwk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "read_only_depends_on": "eval: doc.today === 1;",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "today",
+   "fieldtype": "Check",
+   "label": "Today"
+  },
+  {
+   "fieldname": "section_break_efer",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Attach a receipt, invoice, etc",
+   "fieldname": "proof_of_expense",
+   "fieldtype": "Attach",
+   "label": "Proof of Expense",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_yina",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "payment_requisition.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_mmzc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_qty",
+   "fieldtype": "Int",
+   "label": "Total Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_itgi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_xidp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_gqyx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "payment_requisition.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "print_hide": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "payment_requisition.party",
+   "fetch_if_empty": 1,
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: !doc.cost_center",
+   "fieldname": "section_break_nnub",
+   "fieldtype": "Section Break",
+   "label": "Project Details"
+  },
+  {
+   "fetch_from": "payment_requisition.activity",
+   "fetch_if_empty": 1,
+   "fieldname": "activity",
+   "fieldtype": "Link",
+   "label": "Activity",
+   "options": "Task"
+  },
+  {
+   "fetch_from": "activity.project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_gjms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "payment_requisition.cost_center",
+   "fetch_if_empty": 1,
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-10-17 19:43:04.189403",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Employee Expense Tracker",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

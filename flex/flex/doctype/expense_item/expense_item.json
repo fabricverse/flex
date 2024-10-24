@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:item_name",
+ "creation": "2024-08-12 10:37:21.250982",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_name",
+  "column_break_zfgj",
+  "description",
+  "section_break_hoeu",
+  "create_related_accounts",
+  "accounts_section",
+  "expense_account",
+  "column_break_oact",
+  "payable_account",
+  "default_payable_account",
+  "use_default_payable_account"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_zfgj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: !doc.expense_account || !doc.payable_account",
+   "fieldname": "section_break_hoeu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "0",
+   "description": "Creates a related accounts if they don't exist",
+   "fieldname": "create_related_accounts",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Create Related Accounts"
+  },
+  {
+   "fieldname": "accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Accounts"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Expense Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"]]",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_oact",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "depends_on": "eval: doc.use_default_payable_account===0",
+   "fetch_from": "settings.default_payable_account",
+   "fieldname": "payable_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Payable Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Liability\"],[\"Account\",\"is_group\",\"=\",0]]",
+   "mandatory_depends_on": "eval: doc.use_default_payable_account===0",
+   "options": "Account"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "1",
+   "fieldname": "use_default_payable_account",
+   "fieldtype": "Check",
+   "label": "Use Default Payable Account"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "depends_on": "eval: doc.use_default_payable_account===1",
+   "fetch_from": "settings.default_payable_account",
+   "fieldname": "default_payable_account",
+   "fieldtype": "Link",
+   "label": "Default Payable Account",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Liability\"],[\"Account\",\"is_group\",\"=\",0]]",
+   "no_copy": 1,
+   "options": "Account",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-08-12 15:07:48.162274",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Expense Item",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "item_name",
+ "track_changes": 1
+}

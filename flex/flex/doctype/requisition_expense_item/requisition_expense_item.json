@@ -1,0 +1,125 @@
+{
+ "actions": [],
+ "creation": "2024-10-22 09:05:35.438048",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "expense_details_section",
+  "expense_item",
+  "description",
+  "expense_account",
+  "column_break_4",
+  "amount",
+  "proof_of_expense",
+  "accounting_dimensions_section",
+  "project",
+  "activity",
+  "column_break_6",
+  "cost_center"
+ ],
+ "fields": [
+  {
+   "fieldname": "expense_details_section",
+   "fieldtype": "Section Break",
+   "label": "Expense Details"
+  },
+  {
+   "columns": 2,
+   "fieldname": "expense_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Expense Item",
+   "options": "Expense Item",
+   "reqd": 1
+  },
+  {
+   "bold": 1,
+   "columns": 3,
+   "fetch_from": "expense_item.description",
+   "fetch_if_empty": 1,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fetch_from": "expense_item.expense_account",
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Expense Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "columns": 2,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "currency",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "description": "Blanks default to Default Project if specified on the main form",
+   "fetch_from": "default_project",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "activity",
+   "fieldtype": "Link",
+   "label": "Activity",
+   "options": "Task"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "expense_entry.default_cost_center",
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "columns": 1,
+   "description": "Attach proof that this expense was incurred, e.g. invoice, receipt, etc.",
+   "fieldname": "proof_of_expense",
+   "fieldtype": "Attach",
+   "in_standard_filter": 1,
+   "label": "Proof of Expense",
+   "mandatory_depends_on": "eval: parent.skip_proof === 0"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-23 14:27:59.585589",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Requisition Expense Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

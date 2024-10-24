@@ -1,0 +1,81 @@
+{
+ "charts": [
+  {
+   "chart_name": "Payment Requisition Process Rate",
+   "label": "Payment Approvals This Week"
+  },
+  {
+   "chart_name": "Annual Expendure",
+   "label": "Expense Trends"
+  }
+ ],
+ "content": "[{\"id\":\"aJX8K8Elxp\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Approvals This Week\",\"col\":6}},{\"id\":\"iW4o2xuOpx\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Expense Trends\",\"col\":6}},{\"id\":\"DbVS9WgxbM\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Payments Approved This Month\",\"col\":3}},{\"id\":\"FwdDO2bg9Y\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Payment Approvals\",\"col\":3}},{\"id\":\"L8ovYr0Uil\",\"type\":\"paragraph\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"gcHH77b8Gg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Payment Requisition\",\"col\":3}},{\"id\":\"MXAzjxAaA-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Requisition List\",\"col\":3}}]",
+ "creation": "2024-08-26 15:27:34.892595",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "income",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "Finance",
+ "links": [],
+ "modified": "2024-08-27 00:37:14.479597",
+ "modified_by": "Administrator",
+ "module": "Flex",
+ "name": "Finance",
+ "number_cards": [
+  {
+   "label": "Payments Approved This Month",
+   "number_card_name": "Payments Approved This Month"
+  },
+  {
+   "label": "Pending Payment Approvals",
+   "number_card_name": "Pending Payment Approvals"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "All Finance"
+  }
+ ],
+ "sequence_id": 3.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "New",
+   "label": "New Payment Requisition",
+   "link_to": "Payment Requisition",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{} Pending",
+   "label": "Payment Requisition List",
+   "link_to": "Payment Requisition",
+   "stats_filter": "[[\"Payment Requisition\",\"workflow_state\",\"not in\",[\"Payment Completed\",\"Pending\",\"Cancelled\",\"Rejected\"],false]]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Finance"
+}
