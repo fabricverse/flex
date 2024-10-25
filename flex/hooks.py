@@ -4,6 +4,8 @@ app_publisher = "Fabric"
 app_description = "Flexible Expenses"
 app_email = "devs@thebantoo.com"
 app_license = "mit"
+
+import frappe
 # required_apps = []
 
 # Includes in <head>
@@ -223,7 +225,14 @@ doc_events = {
 
 # Fixtures
 # --------
-fixtures = [
+
+fixtures = [    
+    {
+        "doctype": "Workflow State",
+        "filters": {
+            "workflow_state_name": ["in", [state.state for state in frappe.get_doc("Workflow", "Payment Requisition").states if state.state]]
+        }
+    },    
     {
         "doctype": "Workflow",
         "filters": {

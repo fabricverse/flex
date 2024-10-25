@@ -11,8 +11,8 @@
   "payment_type",
   "series",
   "column_break_mxib",
-  "reference",
   "payment_date",
+  "reference",
   "section_break_epqt",
   "date",
   "today",
@@ -39,6 +39,13 @@
   "total_qty",
   "column_break_gljc",
   "total",
+  "section_break_wdig",
+  "first_quotation",
+  "allow_incomplete_quotations",
+  "column_break_ajbv",
+  "second_quotation",
+  "column_break_lvqu",
+  "third_quotation",
   "section_break_keaa",
   "expense_items",
   "skip_proof",
@@ -47,17 +54,17 @@
   "column_break_ztdz",
   "total_expenditure",
   "deposit_amount",
+  "section_break_wxjo",
+  "column_break_ajop",
+  "column_break_sevf",
+  "column_break_ypdy",
+  "deposit_reference",
+  "column_break_yvli",
+  "btn_reset_deposit",
   "section_break_vdvf",
   "raised_by",
   "column_break_uygv",
   "remarks",
-  "section_break_wdig",
-  "first_quotation",
-  "allow_incomplete_quotations",
-  "column_break_ajbv",
-  "second_quotation",
-  "column_break_lvqu",
-  "third_quotation",
   "section_break_vsjs",
   "submitted_by",
   "initial_approver",
@@ -74,7 +81,7 @@
   "amended_from",
   "column_break_pfki",
   "payable_journal_entry",
-  "payment_journal_entry"
+  "expense_journal_entry"
  ],
  "fields": [
   {
@@ -201,13 +208,13 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: (doc.docstatus==1 && doc.workflow_state === \"Payment Due\") //|| doc.reference",
+   "depends_on": "eval: (doc.workflow_state === \"Payment Due\" || doc.payable_journal_entry)",
    "fieldname": "reference",
    "fieldtype": "Data",
    "label": "Payment Reference/Cheque No",
-   "mandatory_depends_on": "eval:doc.docstatus==1 && doc.workflow_state === \"Payment Due\" && doc.mode_of_payment !== \"Cash\"",
+   "mandatory_depends_on": "eval: doc.workflow_state === \"Payment Due\" && doc.mode_of_payment !== \"Cash\"",
    "no_copy": 1,
-   "read_only_depends_on": "eval: doc.payment_journal_entry"
+   "read_only_depends_on": "eval: doc.payable_journal_entry"
   },
   {
    "fieldname": "company",
@@ -337,28 +344,19 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: (doc.docstatus==1 && doc.workflow_state === \"Payment Due\") // || doc.payment_date",
+   "depends_on": "eval: (doc.workflow_state === \"Payment Due\" || doc.payable_journal_entry)",
    "fieldname": "payment_date",
    "fieldtype": "Date",
    "label": "Payment Date",
-   "mandatory_depends_on": "eval:doc.docstatus==1 && doc.workflow_state === \"Payment Due\"",
+   "mandatory_depends_on": "eval:doc.workflow_state === \"Payment Due\"",
    "no_copy": 1,
-   "read_only_depends_on": "eval: doc.payment_journal_entry"
+   "read_only_depends_on": "eval: (doc.payable_journal_entry)"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "payable_journal_entry",
    "fieldtype": "Link",
    "label": "Supplier Payable / Employee Advance Journal Entry",
-   "no_copy": 1,
-   "options": "Journal Entry",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "payment_journal_entry",
-   "fieldtype": "Link",
-   "label": "Payment Journal Entry",
    "no_copy": 1,
    "options": "Journal Entry",
    "read_only": 1
@@ -422,7 +420,7 @@
   },
   {
    "collapsible": 1,
-   "collapsible_depends_on": "eval: !doc.__islocal",
+   "collapsible_depends_on": "eval: !doc.__islocal || (doc.first_quotation && doc.second_quotation && doc.third_quotation)",
    "fieldname": "section_break_wdig",
    "fieldtype": "Section Break",
    "label": "Attach Quotations"
@@ -463,7 +461,7 @@
    "default": "1",
    "fieldname": "allow_incomplete_quotations",
    "fieldtype": "Check",
-   "label": "Allow Incomplete Quotations",
+   "label": "Save with incomplete quotations",
    "no_copy": 1
   },
   {
@@ -540,12 +538,54 @@
    "fieldtype": "Check",
    "label": "Save Without Proof of Expense",
    "no_copy": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "expense_journal_entry",
+   "fieldtype": "Link",
+   "label": "Expense Journal Entry",
+   "no_copy": 1,
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.deposit_amount > 0",
+   "fieldname": "section_break_wxjo",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "column_break_ajop",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_sevf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_yvli",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ypdy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deposit_reference",
+   "fieldtype": "Data",
+   "label": "Deposit Reference",
+   "mandatory_depends_on": "eval: doc.deposit_amount > 0"
+  },
+  {
+   "fieldname": "btn_reset_deposit",
+   "fieldtype": "Button",
+   "label": "Reset Deposit"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-23 20:32:45.057395",
+ "modified": "2024-10-24 22:00:52.647321",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",

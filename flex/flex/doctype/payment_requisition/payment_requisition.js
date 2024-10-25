@@ -3,8 +3,28 @@
 
 
 frappe.ui.form.on("Payment Requisition", {
+	btn_reset_deposit: function(frm) {
+		frm.set_value("deposit_amount", 0);
+		frm.refresh_field("deposit_amount");
+	},
 	
-	refresh: function(frm) {
+	refresh: function(frm) {		
+		
+		deposit_button = frm.fields_dict["expense_items"].grid.add_custom_button(__('Deposit Remainder'),
+			function() {
+				// Deposit the remainder of the requisition amount to the bank account
+				// Refresh the field to show the updated table
+				let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
+				if (deposit_amount <= 0) {
+					deposit_amount = 0;
+				}
+				frm.set_value("deposit_amount", deposit_amount);
+				frm.refresh_field("expense_items");
+				frm.refresh_field("deposit_amount");
+			}
+		);
+		deposit_button.removeClass('btn-default').addClass('btn-primary');
+
 		frm.fields_dict["expense_items"].grid.add_custom_button(__('Add Requisition Items'), 
 			function() {
 				// Copy items from (requested) request_items to expense_items
@@ -12,8 +32,7 @@ frappe.ui.form.on("Payment Requisition", {
 					// Check if the item already exists in expense_items
 					const exists = frm.doc.expense_items.some(existing_expense => 
 						existing_expense.expense_item === item.expense_item &&
-						existing_expense.expense_account === item.expense_account &&
-						existing_expense.amount === item.amount
+						existing_expense.expense_account === item.expense_account // && existing_expense.amount === item.amount
 					);
 					// If it doesn't exist, add it
 					if (!exists) {
@@ -34,7 +53,7 @@ frappe.ui.form.on("Payment Requisition", {
 					deposit_amount = frm.doc.total - frm.doc.total_expenditure;
 				}
 
-				frm.set_value("deposit_amount", 0);
+				frm.set_value("deposit_amount", deposit_amount);
 				frm.refresh_field("deposit_amount");
 
 				// Refresh the field to show the updated table
@@ -43,20 +62,6 @@ frappe.ui.form.on("Payment Requisition", {
 		);
 		frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default');
 
-		frm.add_custom_button(__('Deposit Remainder'), //fields_dict["expense_items"].grid
-			function() {
-				// Deposit the remainder of the requisition amount to the bank account
-				// Refresh the field to show the updated table
-				let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
-				if (deposit_amount <= 0) {
-					deposit_amount = 0;
-				}
-				frm.set_value("deposit_amount", deposit_amount);
-				frm.refresh_field("expense_items");
-				frm.refresh_field("deposit_amount");
-			}
-		);
-		// frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default');
 	
 		frm.dashboard.show_progress(
 		    "Requisition Expenditure", ((frm.doc.total-frm.doc.total_expenditure)/frm.doc.total * 100)

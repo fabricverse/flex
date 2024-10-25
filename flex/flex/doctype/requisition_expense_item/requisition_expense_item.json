@@ -3,21 +3,26 @@
  "creation": "2024-10-22 09:05:35.438048",
  "default_view": "List",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "supplier",
   "expense_details_section",
   "expense_item",
   "description",
-  "expense_account",
   "column_break_4",
   "amount",
+  "section_break_ygru",
   "proof_of_expense",
+  "column_break_khnm",
+  "reference",
   "accounting_dimensions_section",
-  "project",
-  "activity",
+  "expense_account",
   "column_break_6",
-  "cost_center"
+  "cost_center",
+  "project_information_section",
+  "project",
+  "column_break_hlen",
+  "activity"
  ],
  "fields": [
   {
@@ -69,6 +74,8 @@
    "reqd": 1
   },
   {
+   "collapsible": 1,
+   "collapsible_depends_on": "true",
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
    "label": "Accounting Dimensions"
@@ -103,15 +110,46 @@
    "description": "Attach proof that this expense was incurred, e.g. invoice, receipt, etc.",
    "fieldname": "proof_of_expense",
    "fieldtype": "Attach",
-   "in_standard_filter": 1,
+   "in_list_view": 1,
    "label": "Proof of Expense",
    "mandatory_depends_on": "eval: parent.skip_proof === 0"
+  },
+  {
+   "description": "If item supplier is different from Payee",
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier (optional)",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "section_break_ygru",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_khnm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference (optional)"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "true",
+   "fieldname": "project_information_section",
+   "fieldtype": "Section Break",
+   "label": "Project Information"
+  },
+  {
+   "fieldname": "column_break_hlen",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-23 14:27:59.585589",
+ "modified": "2024-10-24 22:10:04.032199",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Requisition Expense Item",
