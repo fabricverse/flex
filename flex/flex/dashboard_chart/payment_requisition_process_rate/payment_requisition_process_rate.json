@@ -1,5 +1,5 @@
 {
- "aggregate_function_based_on": "no_of_expense_items",
+ "aggregate_function_based_on": "total_qty",
  "based_on": "",
  "chart_name": "Payment Requisition Process Rate",
  "chart_type": "Group By",
@@ -16,8 +16,8 @@
  "idx": 52,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-08-31 15:29:17.595275",
- "modified": "2024-08-31 15:33:42.989160",
+ "last_synced_on": "2024-10-15 12:08:44.962347",
+ "modified": "2024-10-25 15:46:45.427289",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition Process Rate",
