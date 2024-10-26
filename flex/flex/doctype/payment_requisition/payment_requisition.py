@@ -2,12 +2,13 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.utils import flt
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
 
-class PaymentRequisition(Document):
+class PaymentRequisition(Document):        
     def autoname(self):
         self.name = self.generate_custom_name()
     
@@ -16,66 +17,43 @@ class PaymentRequisition(Document):
         self.notify_update()
     
     @frappe.whitelist()
-    def apply_workflow(self, user): # update
-
+    def apply_workflow(self, user):
         if len(self.request_items) < 1:
             return
         settings = frappe.get_single("Payment Requisition Settings")
 
-        self.setup_expense_details(settings, user)
-
-        print(f"Current workflow state: {self.workflow_state} ---------------")
-
-        if self.workflow_state in ["Submitted to Accounts", "Awaiting Internal Approval"]:
-            self.skip_proof = 0
-            self.allow_incomplete_quotations = 0
+        self.calculate_totals()
 
         if self.workflow_state == "Accounts Approval":
             self.validate_totals()
         
         if self.workflow_state == "Capture Expenses" and not self.payable_journal_entry:
-            print("Entering Capture Expenses block")
+            je = None
             # Create payable journal entry
             if self.party_type == "Employee":
-                print(f"Creating employee advance JE for {self.party}")
                 je = self.make_employee_advance_je()
             else:
-                print(f"Creating payable JE for {self.party_type}: {self.party}")
                 if settings.skip_payable_journal_entry == 0:
                     je = self.make_supplier_payable_je(settings, user)
             
             if je:
-                print(f"Inserting and submitting JE")
-                je.insert()
-                je.submit()
-
-                print(f"Setting payable journal entry: {je.name}")
                 self.payable_journal_entry = je.name
                 self.approval_comment = None
-            else:
-                print("No journal entry was created")
                 
         elif self.workflow_state == "Closed":
-            print("Entering Closed block")
+            je = None
             if self.party_type == "Employee":
-                print(f"Creating employee expense JE for {self.party}")
                 je = self.make_employee_expense_je()
             else:
                 if not self.reference and self.mode_of_payment != "Cash":
                     frappe.throw("{} is required for non-cash payments.".format(frappe.bold("Payment Reference")))
 
-                print(f"Creating payment JE for {self.party_type}: {self.party}")
                 if settings.skip_payable_journal_entry == 1:
                     je = self.make_single_supplier_je(settings, user)
                 else:
                     je = self.make_supplier_payment_je(settings, user)
 
             if je:
-                print(f"Inserting and submitting JE")
-                je.insert()
-                je.submit()
-
-                print(f"Setting expense journal entry: {je.name}")
                 self.expense_journal_entry = je.name
                 self.approval_comment = None
             
@@ -84,22 +62,27 @@ class PaymentRequisition(Document):
             self.before_cancel()
             if self.docstatus != 2:
                 self.docstatus = 2
+
+                
     def validate_totals(self):
-        if (self.total_expenditure + self.deposit_amount) != self.total:
-            if (self.total_expenditure + self.deposit_amount) == 0:
+        if not self.total_expenditure or not self.deposit_amount or not self.total:
+            self.calculate_totals()
+
+        if (flt(self.total_expenditure) + flt(self.deposit_amount)) != flt(self.total):
+            if (flt(self.total_expenditure) + flt(self.deposit_amount)) == 0:
                 frappe.throw(
                     title="Expenses Required",
                     msg="Enter expenses equal to the total requisitioned amount or deposit the unspent amount."
                 )
-            if self.total > (self.total_expenditure + self.deposit_amount):
+            if flt(self.total) > (flt(self.total_expenditure) + flt(self.deposit_amount)):
                 frappe.throw(
                     title="Incomplete Expenditure", 
-                    msg=f"""Total expenditure + Deposit amount ({frappe.bold(str(self.total_expenditure + self.deposit_amount) + self.currency)}) 
+                        msg=f"""Total expenditure + Deposit amount ({frappe.bold(str(self.total_expenditure + self.deposit_amount) + self.currency)}) 
                         cannot be less than the requisitioned amount ({frappe.bold(str(self.total) + self.currency)}). 
                         You can deposit the remaining amount if you spent less."""
                 )
             
-            if self.total < (self.total_expenditure + self.deposit_amount):
+            if flt(self.total) < (flt(self.total_expenditure) + flt(self.deposit_amount)):
                 frappe.throw(
                     title="Overspend",
                     msg="Total Expenditure (and Deposited Amount) cannot exceed the requisitioned amount."
@@ -190,7 +173,7 @@ class PaymentRequisition(Document):
         self.workflow_log(user)
 
 
-    def setup_expense_details(self, settings, user):
+    def calculate_totals(self):
         # add request_items up and set the total field
         # add default project and cost center to expense items
 
@@ -221,13 +204,26 @@ class PaymentRequisition(Document):
         if self.total_qty != count:
             self.total_qty = count
 
+        # Calculate total expenditure
+        total_expenditure = 0
         if self.expense_items:
-            total_expenditure = 0
             for item in self.expense_items:
                 total_expenditure += float(item.amount)
 
-            if self.total_expenditure != total_expenditure:
-                self.total_expenditure = total_expenditure
+        if self.total_expenditure != total_expenditure:
+            self.total_expenditure = total_expenditure
+
+        # Update deposit amount if it exceeds available balance
+        if flt(self.total) != flt(self.total_expenditure) + flt(self.deposit_amount):
+            if flt(self.deposit_amount) > 0:
+                updated_deposit_amount = flt(self.total) - flt(self.total_expenditure)
+                self.deposit_amount = updated_deposit_amount
+                frappe.msgprint(
+                    "Deposit Amount Updated", 
+                    indicator="blue",
+                    alert=True
+                )
+
 
 
     def make_single_supplier_je(self, settings, user):
@@ -299,6 +295,9 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+
+        je.insert()
+        je.submit()
 
         return je
 
@@ -434,10 +433,13 @@ class PaymentRequisition(Document):
 
         Example:
             je = self.make_employee_advance_je()
-            je.insert()
-            je.submit()
         """
-        if self.mode_of_payment != "Cash" and (not self.reference or not self.payment_date):
+        if not self.payment_date:
+            frappe.throw(
+                title="Enter Payment Date",
+                msg="Payment Date is Required for all payments."
+            )
+        if self.mode_of_payment != "Cash" and not self.reference:
             frappe.throw(
                 title="Enter Payment Reference",
                 msg="Payment Reference and Date are Required for all non-cash payments."
@@ -500,6 +502,9 @@ class PaymentRequisition(Document):
 
         je = frappe.get_doc(je_data)
 
+        je.insert()
+        je.submit()
+
         return je
     
     def make_employee_expense_je(self):
@@ -523,8 +528,6 @@ class PaymentRequisition(Document):
 
         Example:
             je = self.make_employee_expense_je()
-            je.insert()
-            je.submit()
         """
 
         # validations
@@ -572,7 +575,7 @@ class PaymentRequisition(Document):
             })
         
         # add deposit of unspent amount
-        if self.deposit_amount > 0:
+        if flt(self.deposit_amount) > 0:
             accounts.append({
                 'debit_in_account_currency': float(self.deposit_amount) * self.conversion_rate,
                 'user_remark': "Deposit of unspent amount reference: " + self.deposit_reference,
@@ -585,7 +588,13 @@ class PaymentRequisition(Document):
             })
 
         # Finally, add the payment account detail
-        if self.mode_of_payment != "Cash" and (not self.reference or not self.payment_date):
+
+        if not self.payment_date:
+            frappe.throw(
+                title="Enter Payment Date",
+                msg="Payment Date is Required for all payments."
+            )
+        if self.mode_of_payment != "Cash" and not self.reference:
             frappe.throw(
                 title="Enter Payment Reference",
                 msg="Payment Reference and Date are Required for all non-cash payments."
@@ -614,6 +623,9 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+
+        je.insert()
+        je.submit()
 
         return je
     
@@ -701,6 +713,9 @@ class PaymentRequisition(Document):
             'bill_no': self.name
         })
 
+        je.insert()
+        je.submit()
+
         return je
 
 
@@ -709,44 +724,40 @@ class PaymentRequisition(Document):
         account_entries = {}
 
         # Group request_items by account
-        requested = {(
-                        detail.expense_payable_account,
-                        detail.project,
-                        detail.cost_center,
-                    ) : detail.expense_payable_account for detail in self.request_items}
-        
-        for detail in self.expense_items:
+        for detail in self.expense_items:            
+            expense_payable_account = detail.expense_payable_account
+            if not expense_payable_account:
+                expense_payable_account = settings.default_payable_account
+
             account_key = (
-                detail.expense_payable_account,
+                detail.expense_account,
                 detail.project,
                 detail.cost_center
             )
-            if account_key in requested:
-                expense_account = requested[account_key]
-            else:
-                expense_account = detail.expense_payable_account
-                if not expense_account:
-                    expense_account = settings.default_payable_account
             
             if account_key in account_entries:
-                account_entries[account_key]['debit_in_account_currency'] += float(detail.amount) * self.conversion_rate
+                account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount * self.conversion_rate, 3)
                 
-                account_entries[account_key]['account'] = expense_account
+                account_entries[account_key]['account'] = expense_payable_account
             else:
                 account_entries[account_key] = {
-                    'debit_in_account_currency': float(detail.amount) * self.conversion_rate,
+                    'debit_in_account_currency': flt(detail.amount * self.conversion_rate, 3),
                     'user_remark': str(detail.description),
-                    'account': expense_account,
+                    'account': expense_payable_account,
                     'project': detail.project,
                     'cost_center': detail.cost_center,
                     'party_type': self.party_type,
                     'party': self.party
                 }
 
-        frappe.throw(account_entries)
-
         # Finally, add the payment account detail
-        if self.mode_of_payment != "Cash" and (not self.reference or not self.payment_date):
+
+        if not self.payment_date:
+            frappe.throw(
+                title="Enter Payment Date",
+                msg="Payment Date is Required for all payments."
+            )
+        if self.mode_of_payment != "Cash" and not self.reference:
             frappe.throw(
                 title="Enter Payment Reference",
                 msg="Payment Reference and Date are Required for all non-cash payments."
@@ -766,10 +777,23 @@ class PaymentRequisition(Document):
 
         # Prepare accounts list
         accounts = list(account_entries.values())
+
+        # add deposit of unspent amount
+        if flt(self.deposit_amount) > 0:
+            accounts.append({
+                'debit_in_account_currency': flt(self.deposit_amount) * self.conversion_rate,
+                'user_remark': "Deposit of unspent amount reference: " + self.deposit_reference,
+                'exchange_rate': self.conversion_rate,
+                'account': pay_account,
+                'cost_center': self.cost_center,
+                'party': self.party,
+                'party_type': self.party_type,
+                'project': self.project_name
+            })
         
         # Add the payment entry
         accounts.append({
-            'credit_in_account_currency': float(self.total) * self.conversion_rate,
+            'credit_in_account_currency': flt(self.total * self.conversion_rate, 3),
             'user_remark': str(self.remarks),
             'account': pay_account,
             'cost_center': self.cost_center
@@ -798,6 +822,8 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+        je.insert()
+        je.submit()
 
         return je
 
