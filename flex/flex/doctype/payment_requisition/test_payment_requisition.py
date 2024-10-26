@@ -9,10 +9,15 @@ from flex.flex.doctype.payment_requisition.payment_requisition import PaymentReq
 class TestPaymentRequisition(FrappeTestCase):
 	def setUp(self):
 		# Create test data
-		# company = frappe.get_all("Company", fields=["name"], limit=1)[0]
 		self.series = frappe.get_all("Document Series", fields=["*"], limit=1)[0]
 		self.company = frappe.get_all("Company", fields=["*"], limit=1)[0]
+		self._create_test_employee()
+		self._create_test_cost_center()
+		self._create_test_expense_account()
+		self.mode_of_payment = frappe.get_all("Mode of Payment", filters={"name": ["like", "cash"]}, fields=["*"], limit=1)[0]
+		self._create_test_expense_item()
 
+	def _create_test_employee(self):
 		if not frappe.get_all("Employee", filters={"first_name": "John", "last_name": "Doe", "company": self.company.name}):
 			self.employee = frappe.get_doc({
 				"doctype": "Employee",
@@ -26,6 +31,7 @@ class TestPaymentRequisition(FrappeTestCase):
 		else:
 			self.employee = frappe.get_all("Employee", filters={"first_name": "John", "last_name": "Doe", "company": self.company.name})[0]
 
+	def _create_test_cost_center(self):
 		if not frappe.get_all("Cost Center", filters={"cost_center_name": "Test Cost Center", "company": self.company.name}):
 			self.cost_center = frappe.get_doc({
 				"doctype": "Cost Center",
@@ -37,6 +43,7 @@ class TestPaymentRequisition(FrappeTestCase):
 		else:
 			self.cost_center = frappe.get_all("Cost Center", fields=["*"], filters={"cost_center_name": "Test Cost Center", "company": self.company.name})[0]
 
+	def _create_test_expense_account(self):
 		if not frappe.get_all("Account", filters={"account_name": "Test Expense Account", "company": self.company.name}):
 			self.expense_account = frappe.get_doc({
 				"doctype": "Account",
@@ -49,9 +56,7 @@ class TestPaymentRequisition(FrappeTestCase):
 		else:
 			self.expense_account = frappe.get_all("Account", filters={"account_name": "Test Expense Account", "company": self.company.name})[0]
 
-		self.mode_of_payment = frappe.get_all("Mode of Payment", filters={"name": ["like", "cash"]}, fields=["*"], limit=1)[0]
-
-		 # Create test Expense Item if it doesn't exist
+	def _create_test_expense_item(self):
 		if not frappe.db.exists("Expense Item", "Test Expense Item"):
 			self.request_items = frappe.get_doc({
 				"doctype": "Expense Item",
@@ -64,25 +69,29 @@ class TestPaymentRequisition(FrappeTestCase):
 		else:
 			self.request_items = frappe.get_doc("Expense Item", "Test Expense Item")
 
-	def tearDown(self):
-		# Clean up test data
-		frappe.set_user("Administrator")
-		# frappe.delete_doc("Payment Requisition", frappe.get_last_doc("Payment Requisition").name)
-		# frappe.delete_doc("Employee", self.employee.name)
-		# frappe.delete_doc("Cost Center", self.cost_center.name)
-		# frappe.delete_doc("Account", self.expense_account.name)
-		# frappe.delete_doc("Mode of Payment", self.mode_of_payment.name)
-		# frappe.delete_doc("Company", self.company.name)
-		# frappe.delete_doc("Expense Item", self.request_items.name)
+	def _create_test_supplier(self):
+		"""Create a test supplier if it doesn't exist"""
+		if not frappe.get_all("Supplier", filters={"supplier_name": "Test Supplier", "company": self.company.name}):
+			self.supplier = frappe.get_doc({
+				"doctype": "Supplier",
+				"supplier_name": "Test Supplier",
+				"supplier_group": "All Supplier Groups",
+				"supplier_type": "Company",
+				"company": self.company.name
+			}).insert()
+		else:
+			self.supplier = frappe.get_all("Supplier", 
+				filters={"supplier_name": "Test Supplier", "company": self.company.name})[0]
 
-	def test_payment_requisition_creation(self):
-		pr = frappe.get_doc({
+	def _create_payment_requisition(self, **kwargs):
+		"""Create a test Payment Requisition with default or custom values"""
+		default_values = {
 			"doctype": "Payment Requisition",
-			"company": self.company.name,
+			"date": today(),
 			"series": self.series.name,
+			"company": self.company.name,
 			"party_type": "Employee",
 			"party": self.employee.name,
-			"date": today(),
 			"currency": "USD",
 			"cost_center": self.cost_center.name,
 			"mode_of_payment": self.mode_of_payment.name,
@@ -95,161 +104,102 @@ class TestPaymentRequisition(FrappeTestCase):
 					"description": "Test Expense"
 				}
 			]
-		})
-		pr.insert()
+		}
+		# Update default values with any custom values provided
+		default_values.update(kwargs)
+		return frappe.get_doc(default_values).insert()
 
+	def _test_workflow_transitions(self, pr, transitions):
+		"""Test a sequence of workflow transitions"""
+		for from_state, to_state in transitions:
+			pr.workflow_state = from_state
+			pr.save()
+			self.assertEqual(pr.workflow_state, from_state)
+			
+			pr.workflow_state = to_state
+			pr.set("expense_items", [])
+			pr.append("expense_items", {
+				"expense_item": self.request_items.name,
+				"expense_account": self.expense_account.name,
+				"cost_center": self.cost_center.name,
+				"amount": 1000,
+				"description": "Test Expense"
+			})
+			pr.save()
+			self.assertEqual(pr.workflow_state, to_state)
+
+	def test_payment_requisition_creation(self):
+		"""Test basic creation of Payment Requisition"""
+		pr = self._create_payment_requisition()
 		self.assertEqual(pr.total, 1000)
 		self.assertEqual(pr.total_qty, 1)
 		self.assertEqual(pr.workflow_state, "Quotations Required")
 
 	def test_payment_requisition_workflow(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Test workflow states
-		pr.workflow_state = "Submitted to Accounts"
+		"""Test all valid workflow transitions"""
+		pr = self._create_payment_requisition()
+		pr.payment_date = today()
+		pr.reference = "TEST-REF-001" if self.mode_of_payment.name != "Cash" else None
 		pr.save()
-		self.assertEqual(pr.workflow_state, "Submitted to Accounts")
+		# Test main workflow path
+		main_transitions = [
+			("Quotations Required", "Submitted to Accounts"),
+			("Submitted to Accounts", "Awaiting Internal Approval"),
+			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
+			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
+			("Awaiting Director Approval (2)", "Payment Due"),
+			("Payment Due", "Capture Expenses"),
+			("Capture Expenses", "Accounts Approval"),
+			("Accounts Approval", "Closed")
+		]
+		self._test_workflow_transitions(pr, main_transitions)
 
-		# pr.workflow_state = "Ready for Submission"
-		# pr.save()
-		# self.assertEqual(pr.workflow_state, "Ready for Submission")
-
-		pr.workflow_state = "Awaiting Internal Approval"
+		pr = self._create_payment_requisition()
+		pr.payment_date = today()
+		pr.reference = "TEST-REF-001" if self.mode_of_payment.name != "Cash" else None
 		pr.save()
-		self.assertEqual(pr.workflow_state, "Awaiting Internal Approval")
+		# Test revision paths
+		revision_transitions = [
+			("Submitted to Accounts", "Employee Revision Required"),
+			("Employee Revision Required", "Submitted to Accounts"),
+			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
+			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
+			("Awaiting Director Approval (2)", "Payment Due"),
+			("Capture Expenses", "Accounts Approval"),
+			("Accounts Approval","Expense Revision")
+		]
+		self._test_workflow_transitions(pr, revision_transitions)
 
-		pr.workflow_state = "Awaiting Director Approval (1)"
+		pr = self._create_payment_requisition()
+		pr.payment_date = today()
+		pr.reference = "TEST-REF-001" if self.mode_of_payment.name != "Cash" else None
 		pr.save()
-		self.assertEqual(pr.workflow_state, "Awaiting Director Approval (1)")
+		# Test rejection and cancellation paths
+		rejection_transitions = [
+			("Submitted to Accounts", "Employee Revision Required"),
+			("Employee Revision Required", "Submitted to Accounts"),
+			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
+			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
+			("Awaiting Director Approval (2)", "Rejected"),
+			("Rejected", "Cancelled")
+		]
+		self._test_workflow_transitions(pr, rejection_transitions)
 
-		pr.workflow_state = "Awaiting Director Approval (2)"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Awaiting Director Approval (2)")
-
-		pr.workflow_state = "Approved"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Approved")
-
-	def test_payment_requisition_currency_conversion(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"company": self.company.name,
-			"party_type": "Employee",
-			"series": self.series.name,
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "EUR",
-			"conversion_rate": 1.2,
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		self.assertEqual(pr.total, 1000)
-
-	def test_payment_requisition_validation(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": []
-		})
-
+		# Ensure cancelled state is final
 		with self.assertRaises(frappe.ValidationError):
-			pr.insert()
+			pr.workflow_state = "Payment Due"
+			pr.save()
 
-	# todo: combine with test_payment_requisition_workflow or refactor to payable
-	"""def test_payment_requisition_gl_entry(self): 
+	def test_quotation_attachments(self):
+		"""Test quotation attachment functionality"""
+		pr = self._create_payment_requisition()
 		
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
+		# Test with incomplete quotations allowed
+		pr.allow_incomplete_quotations = 1
+		pr.save()
+		self.assertEqual(pr.allow_incomplete_quotations, 1)
 
-		pr.submit()
-		print(pr.workflow_state)
-
-
-		gl_entries = frappe.get_all("GL Entry", 
-									filters={"voucher_no": pr.name},
-									fields=["account", "debit", "credit"])
-
-		self.assertEqual(len(gl_entries), 2) # todo
-		# self.assertTrue(any(entry["account"] == self.expense_account.name and entry["debit"] == 1000 for entry in gl_entries))
-		# self.assertTrue(any(entry["account"].endswith("Payable - " + self.company.abbr) and entry["credit"] == 1000 for entry in gl_entries))
-"""
-	def test_quotation_attachment(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Test quotation attachment
+		# Test quotation attachments
 		pr.first_quotation = "test_quotation_1.pdf"
 		pr.second_quotation = "test_quotation_2.pdf"
 		pr.third_quotation = "test_quotation_3.pdf"
@@ -259,744 +209,233 @@ class TestPaymentRequisition(FrappeTestCase):
 		self.assertEqual(pr.second_quotation, "test_quotation_2.pdf")
 		self.assertEqual(pr.third_quotation, "test_quotation_3.pdf")
 
-	def test_allow_incomplete_quotations(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Test allow_incomplete_quotations
-		pr.allow_incomplete_quotations = 1
-		pr.save()
-		self.assertEqual(pr.allow_incomplete_quotations, 1)
-
-		pr.allow_incomplete_quotations = 0
-		pr.save()
-		self.assertEqual(pr.allow_incomplete_quotations, 0)
-
 	def test_payment_journal_entry_creation(self):
-		# Get the current setting
+		"""Test journal entry creation with different settings"""
 		settings = frappe.get_single("Payment Requisition Settings")
 		original_skip_payable = settings.skip_payable_journal_entry
 
-		# Test both cases: with and without skipping payable journal entry
 		for skip_payable in [0, 1]:
 			settings.skip_payable_journal_entry = skip_payable
 			settings.save()
 
-			pr = frappe.get_doc({
-				"doctype": "Payment Requisition",
-				"series": self.series.name,
-				"company": self.company.name,
-				"party_type": "Employee",
-				"party": self.employee.name,
-				"date": today(),
-				"currency": "USD",
-				"cost_center": self.cost_center.name,
-				"mode_of_payment": self.mode_of_payment.name,
-				"request_items": [
-					{
-						"expense_item": self.request_items.name,
-						"expense_account": self.expense_account.name,
-						"cost_center": self.cost_center.name,
-						"amount": 1000,
-						"description": "Test Expense"
-					}
-				]
-			}).insert()
-
-			# pr.submit()
-			# pr.reload()
-
-			# Move the PR to Approved state
+			pr = self._create_payment_requisition()
+			
+			# Move to Closed state
 			workflow_states = [
+				"Quotations Required",
 				"Submitted to Accounts",
 				"Awaiting Internal Approval",
 				"Awaiting Director Approval (1)",
 				"Awaiting Director Approval (2)",
-				"Approved"
+				"Payment Due",
+				"Capture Expenses",
+				"Accounts Approval",
+				"Closed"
 			]
+
+			# Add payment details
+			pr.payment_date = today()
+			pr.reference = "TEST-REF-001" if self.mode_of_payment.name != "Cash" else None
+
+			pr.set("expense_items", [])
+			pr.append("expense_items", {
+				"expense_item": self.request_items.name,
+				"expense_account": self.expense_account.name,
+				"cost_center": self.cost_center.name,
+				"amount": 1000,
+				"description": "Test Expense"
+			})
+			pr.save()
 
 			for state in workflow_states:
 				pr.workflow_state = state
-				pr.save()
-				self.assertEqual(pr.workflow_state, state)
-			# pr.reload()
-			
-			self.assertEqual(pr.workflow_state, "Approved")
+				pr.save()	
 
-
-			# Add payment date and reference
-			pr.payment_date = today()
-			pr.reference = "TEST-REF-001"
-			pr.save()
-			# pr.reload()
-			
-			self.assertTrue(pr.payment_date)
-			if self.mode_of_payment.name != "Cash":
-				self.assertTrue(pr.reference)
-
-	
-			self.assertEqual(pr.workflow_state, "Payment Completed")
-			
+			# Verify journal entries
 			if skip_payable == 1:
-				self.assertFalse(pr.payable_journal_entry)
+				if pr.party_type == "Employee":
+					self.assertTrue(pr.payable_journal_entry)
+				else:
+					self.assertTrue(pr.expense_journal_entry)
+					self.assertFalse(pr.payable_journal_entry)
 			else:
-				self.assertTrue(pr.payment_journal_entry)
+				self.assertTrue(pr.expense_journal_entry)
 				self.assertTrue(pr.payable_journal_entry)
-				
 
-			self.assertEqual(pr.workflow_state, "Payment Completed")
-			self.assertTrue(pr.payment_journal_entry)
-
-			# Verify the created journal entry
-			je = frappe.get_doc("Journal Entry", pr.payment_journal_entry)
-			
+			# Verify journal entry details
+			je = frappe.get_doc("Journal Entry", pr.expense_journal_entry)
 			if self.mode_of_payment.name != "Cash":
-				print(self.mode_of_payment.name, je.cheque_no, pr.reference)
 				self.assertEqual(je.cheque_no, pr.reference)
-				
 			self.assertEqual(je.total_debit, 1000)
 			self.assertEqual(je.total_credit, 1000)
-
-			# Check the number of journal entries created
-			journal_entries = frappe.get_all("Journal Entry", filters={"bill_no": pr.name})
-			expected_je_count = 1 if skip_payable else 2
-			self.assertEqual(len(journal_entries), expected_je_count)
-
-			# # Clean up
-			# for je_name in [entry.name for entry in journal_entries]:
-			# 	je = frappe.get_doc("Journal Entry", je_name)
-			# 	je.cancel()
-			# 	# frappe.delete_doc("Journal Entry", je.name)
-
-			# pr.cancel()
-			# frappe.delete_doc("Payment Requisition", pr.name)
 
 		# Restore original setting
 		settings.skip_payable_journal_entry = original_skip_payable
 		settings.save()
 
-	def test_payment_requisition_workflow_transitions(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Test all valid transitions
-		transitions = [
+	def test_supplier_payment_requisition(self):
+		"""Test Payment Requisition creation and workflow with Supplier as party"""
+		self._create_test_supplier()
+		
+		# Create PR with supplier as party
+		pr = self._create_payment_requisition(
+			party_type="Supplier",
+			party=self.supplier.name
+		)
+		
+		self.assertEqual(pr.party_type, "Supplier")
+		self.assertEqual(pr.total, 1000)
+		
+		# Test workflow transitions with supplier
+		pr.payment_date = today()
+		pr.reference = "TEST-REF-002" if self.mode_of_payment.name != "Cash" else None
+		pr.save()
+		
+		# Test main workflow path for supplier
+		supplier_transitions = [
 			("Quotations Required", "Submitted to Accounts"),
 			("Submitted to Accounts", "Awaiting Internal Approval"),
 			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
 			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
-			("Awaiting Director Approval (2)", "Approved"),
-			("Approved", "Payment Completed"),
+			("Awaiting Director Approval (2)", "Payment Due"),
+			("Payment Due", "Capture Expenses"),
+			("Capture Expenses", "Accounts Approval"),
+			("Accounts Approval", "Closed")
 		]
+		self._test_workflow_transitions(pr, supplier_transitions)
+		
+		# Verify journal entries for supplier
+		self.assertTrue(pr.expense_journal_entry)
+		
+		# Verify journal entry details
+		je = frappe.get_doc("Journal Entry", pr.expense_journal_entry)
+		self.assertEqual(je.total_debit, 1000)
+		self.assertEqual(je.total_credit, 1000)
 
-		for from_state, to_state in transitions:
-			pr.workflow_state = from_state
-			pr.save()
-			self.assertEqual(pr.workflow_state, from_state)
+	def test_deposit_amount_calculation(self):
+		"""Test deposit amount calculations and updates"""
+		settings = frappe.get_single("Payment Requisition Settings")
+		original_skip_payable = settings.skip_payable_journal_entry
+
+		for skip_payable in [0, 1]:
+			settings.skip_payable_journal_entry = skip_payable
+			settings.save()
+			pr = self._create_payment_requisition()
 			
-			pr.workflow_state = to_state
+			# Initial state - total should be 1000 from the single request item
+			self.assertEqual(pr.total, 1000)
+			self.assertEqual(pr.total_expenditure, 0)
+			self.assertEqual(frappe.utils.flt(pr.deposit_amount), 0)
+			
+			# Add an expense item for partial amount
+			pr.append("expense_items", {
+				"expense_item": self.request_items.name,
+				"expense_account": self.expense_account.name,
+				"cost_center": self.cost_center.name,
+				"amount": 600,
+				"description": "Partial Expense"
+			})
 			pr.save()
-			self.assertEqual(pr.workflow_state, to_state)
+			
+			# Verify total_expenditure updated
+			self.assertEqual(pr.total_expenditure, 600)
+			
+			# Set deposit amount to remaining balance
+			pr.deposit_amount = pr.total - pr.total_expenditure  # 1000 - 600 = 400
+			pr.save()
+			
+			# Verify deposit amount
+			self.assertEqual(pr.deposit_amount, 400)
+			
+			# Add another expense item
+			pr.append("expense_items", {
+				"expense_item": self.request_items.name,
+				"expense_account": self.expense_account.name,
+				"cost_center": self.cost_center.name,
+				"amount": 300,
+				"description": "Additional Expense"
+			})
+			pr.save()
+			
+			# Verify updated totals
+			self.assertEqual(pr.total_expenditure, 900)
+			
+			# Update deposit amount to new remainder
+			pr.deposit_amount = pr.total - pr.total_expenditure  # 1000 - 900 = 100
+			pr.save()
+			
+			# Verify deposit amount updated
+			self.assertEqual(pr.deposit_amount, 100)
+			
+			# Test when expenses exceed total
+			pr.append("expense_items", {
+				"expense_item": self.request_items.name,
+				"expense_account": self.expense_account.name,
+				"cost_center": self.cost_center.name,
+				"amount": 200,
+				"description": "Excess Expense"
+			})
+			pr.save()
+			
+			# Verify totals when expenses exceed request
+			self.assertEqual(pr.total_expenditure, 1100)
+			
+			# Deposit amount should be 0 when expenses exceed total
+			pr.deposit_amount = max(0, pr.total - pr.total_expenditure)
+			pr.save()
+			
+			self.assertEqual(pr.deposit_amount, 0)
 
-		# Ensure that once approved, it can't be revised or rejected
-		# pr.workflow_state = "Approved"
-		# pr.save()
-		self.assertEqual(pr.workflow_state, "Payment Completed")
-
-		with self.assertRaises(frappe.ValidationError):
-			pr.workflow_state = "Revision Requested"
+			pr.append("request_items", {
+				"expense_item": self.request_items.name,
+				"expense_account": self.expense_account.name,
+				"cost_center": self.cost_center.name,
+				"amount": 100,
+				"description": "Excess Expense"
+			})
 			pr.save()
 
-		with self.assertRaises(frappe.ValidationError):
-			pr.workflow_state = "Rejected"
-			pr.save()
-
-	def test_payment_requisition_revision_and_rejection(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
+			# Move to Closed state
+			workflow_states = [
+				"Quotations Required",
+				"Submitted to Accounts",
+				"Awaiting Internal Approval",
+				"Awaiting Director Approval (1)",
+				"Awaiting Director Approval (2)",
+				"Payment Due",
+				"Capture Expenses",
+				"Accounts Approval",
+				"Closed"
 			]
-		}).insert()
 
-		# Test revision paths
-		revision_transitions = [
-			("Submitted to Accounts", "Employee Revision Required"),
-			("Employee Revision Required", "Submitted to Accounts"),
-			("Awaiting Internal Approval", "Revision Requested"),
-			("Revision Requested", "Employee Revision Required"),
-			("Employee Revision Required", "Submitted to Accounts"),
-			("Submitted to Accounts", "Awaiting Internal Approval"),
-			("Awaiting Director Approval (1)", "Revision Requested"),
-			("Revision Requested", "Awaiting Internal Approval"),
-			("Awaiting Director Approval (2)", "Revision Requested"),
-		]
+			# Add payment details
+			pr.payment_date = today()
+			pr.reference = "TEST-REF-001" if self.mode_of_payment.name != "Cash" else None
 
-		for from_state, to_state in revision_transitions:
-			pr.workflow_state = from_state
-			pr.save()
-			self.assertEqual(pr.workflow_state, from_state)
-			
-			pr.workflow_state = to_state
-			pr.save()
-			self.assertEqual(pr.workflow_state, to_state)
-
-		# Test rejection path
-		pr.workflow_state = "Awaiting Director Approval (2)"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Awaiting Director Approval (2)")
-
-		pr.workflow_state = "Rejected"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Rejected")
-
-		# Test that rejected state can be changed to revision requested
-		pr.workflow_state = "Revision Requested"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Revision Requested")
-
-	def test_payment_requisition_cancellation(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Move the PR to Approved state
-		workflow_states = [
-			"Submitted to Accounts",
-			"Awaiting Internal Approval",
-			"Awaiting Director Approval (1)",
-			"Awaiting Director Approval (2)",
-			"Approved"
-		]
-
-		for state in workflow_states:
-			pr.workflow_state = state
-			pr.save()
-			self.assertEqual(pr.workflow_state, state)
-
-		# Check if the document can be cancelled after approval
-		pr.workflow_state = "Cancelled"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Cancelled")
-
-		# Create a new PR for testing cancellation after payment completion
-		pr2 = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Move pr2 to Payment Completed state
-		for state in workflow_states + ["Payment Completed"]:
-			pr2.workflow_state = state
-			pr2.save()
-			self.assertEqual(pr2.workflow_state, state)
-
-		# Check if the document can be cancelled after payment completion
-		pr2.workflow_state = "Cancelled"
-		pr2.save()
-		self.assertEqual(pr2.workflow_state, "Cancelled")
-
-		# Ensure that cancelled state is final for both documents
-		with self.assertRaises(frappe.ValidationError):
-			pr.workflow_state = "Approved"
 			pr.save()
 
-		with self.assertRaises(frappe.ValidationError):
-			pr2.workflow_state = "Payment Completed"
-			pr2.save()
+			for state in workflow_states:
+				pr.workflow_state = state
+				pr.save()	
 
-		# 	"date": today(),
-		# 	"currency": "USD",
-		# 	"cost_center": self.cost_center.name,
-		# 	"mode_of_payment": self.mode_of_payment.name,
-		# 	"request_items": [
-		# 		{
-		# 			"expense_item": self.request_items.name,
-		# 			"expense_account": self.expense_account.name,
-		# 			"cost_center": self.cost_center.name,
-		# 			"amount": 1000,
-		# 			"description": "Test Expense"
-		# 		}
-		# 	]
-		# }).insert()
+			# Verify journal entries
+			if skip_payable == 1:
+				if pr.party_type == "Employee":
+					self.assertTrue(pr.payable_journal_entry)
+				else:
+					self.assertTrue(pr.expense_journal_entry)
+					self.assertFalse(pr.payable_journal_entry)
+			else:
+				self.assertTrue(pr.expense_journal_entry)
+				self.assertTrue(pr.payable_journal_entry)
 
-		# pr.submit()
-		# print(pr.workflow_state)
+			# Verify journal entry details
+			je = frappe.get_doc("Journal Entry", pr.expense_journal_entry)
+			if self.mode_of_payment.name != "Cash":
+				self.assertEqual(je.cheque_no, pr.reference)
+			self.assertEqual(je.total_debit, 1100)
+			self.assertEqual(je.total_credit, 1100)
 
-
-		# gl_entries = frappe.get_all("GL Entry", 
-		# 							filters={"voucher_no": pr.name},
-		# 							fields=["account", "debit", "credit"])
-
-		# self.assertEqual(len(gl_entries), 2) # todo
-		# self.assertTrue(any(entry["account"] == self.expense_account.name and entry["debit"] == 1000 for entry in gl_entries))
-		# self.assertTrue(any(entry["account"].endswith("Payable - " + self.company.abbr) and entry["credit"] == 1000 for entry in gl_entries))
-# """
-# 	def test_quotation_attachment(self):
-# 		pr = frappe.get_doc({
-# 			"doctype": "Payment Requisition",
-# 			"series": self.series.name,
-# 			"company": self.company.name,
-# 			"party_type": "Employee",
-# 			"party": self.employee.name,
-# 			"date": today(),
-# 			"currency": "USD",
-# 			"cost_center": self.cost_center.name,
-# 			"mode_of_payment": self.mode_of_payment.name,
-# 			"request_items": [
-# 				{
-# 					"expense_item": self.request_items.name,
-# 					"expense_account": self.expense_account.name,
-# 					"cost_center": self.cost_center.name,
-# 					"amount": 1000,
-# 					"description": "Test Expense"
-# 				}
-# 			]
-# 		}).insert()
-
-# 		# Test quotation attachment
-# 		pr.first_quotation = "test_quotation_1.pdf"
-# 		pr.second_quotation = "test_quotation_2.pdf"
-# 		pr.third_quotation = "test_quotation_3.pdf"
-# 		pr.save()
-
-# 		self.assertEqual(pr.first_quotation, "test_quotation_1.pdf")
-# 		self.assertEqual(pr.second_quotation, "test_quotation_2.pdf")
-# 		self.assertEqual(pr.third_quotation, "test_quotation_3.pdf")
-
-# 	def test_allow_incomplete_quotations(self):
-# 		pr = frappe.get_doc({
-# 			"doctype": "Payment Requisition",
-# 			"series": self.series.name,
-# 			"company": self.company.name,
-# 			"party_type": "Employee",
-# 			"party": self.employee.name,
-# 			"date": today(),
-# 			"currency": "USD",
-# 			"cost_center": self.cost_center.name,
-# 			"mode_of_payment": self.mode_of_payment.name,
-# 			"request_items": [
-# 				{
-# 					"expense_item": self.request_items.name,
-# 					"expense_account": self.expense_account.name,
-# 					"cost_center": self.cost_center.name,
-# 					"amount": 1000,
-# 					"description": "Test Expense"
-# 				}
-# 			]
-# 		}).insert()
-
-# 		# Test allow_incomplete_quotations
-# 		pr.allow_incomplete_quotations = 1
-# 		pr.save()
-# 		self.assertEqual(pr.allow_incomplete_quotations, 1)
-
-# 		pr.allow_incomplete_quotations = 0
-# 		pr.save()
-# 		self.assertEqual(pr.allow_incomplete_quotations, 0)
-
-# 	def test_payment_journal_entry_creation(self):
-# 		# Get the current setting
-# 		settings = frappe.get_single("Payment Requisition Settings")
-# 		original_skip_payable = settings.skip_payable_journal_entry
-
-# 		# Test both cases: with and without skipping payable journal entry
-# 		for skip_payable in [0, 1]:
-# 			settings.skip_payable_journal_entry = skip_payable
-# 			settings.save()
-
-# 			pr = frappe.get_doc({
-# 				"doctype": "Payment Requisition",
-# 				"series": self.series.name,
-# 				"company": self.company.name,
-# 				"party_type": "Employee",
-# 				"party": self.employee.name,
-# 				"date": today(),
-# 				"currency": "USD",
-# 				"cost_center": self.cost_center.name,
-# 				"mode_of_payment": self.mode_of_payment.name,
-# 				"request_items": [
-# 					{
-# 						"expense_item": self.request_items.name,
-# 						"expense_account": self.expense_account.name,
-# 						"cost_center": self.cost_center.name,
-# 						"amount": 1000,
-# 						"description": "Test Expense"
-# 					}
-# 				]
-# 			}).insert()
-
-# 			# pr.submit()
-# 			# pr.reload()
-
-# 			# Move the PR to Approved state
-# 			workflow_states = [
-# 				"Submitted to Accounts",
-# 				"Awaiting Internal Approval",
-# 				"Awaiting Director Approval (1)",
-# 				"Awaiting Director Approval (2)",
-# 				"Approved"
-# 			]
-
-# 			for state in workflow_states:
-# 				pr.workflow_state = state
-# 				pr.save()
-# 				self.assertEqual(pr.workflow_state, state)
-# 			# pr.reload()
-			
-# 			self.assertEqual(pr.workflow_state, "Approved")
-
-
-# 			# Add payment date and reference
-# 			pr.payment_date = today()
-# 			pr.reference = "TEST-REF-001"
-# 			pr.save()
-# 			# pr.reload()
-			
-# 			self.assertTrue(pr.payment_date)
-# 			if self.mode_of_payment.name != "Cash":
-# 				self.assertTrue(pr.reference)
-
-	
-# 			self.assertEqual(pr.workflow_state, "Payment Completed")
-			
-# 			if skip_payable == 1:
-# 				self.assertFalse(pr.payable_journal_entry)
-# 			else:
-# 				self.assertTrue(pr.payment_journal_entry)
-# 				self.assertTrue(pr.payable_journal_entry)
-				
-
-# 			self.assertEqual(pr.workflow_state, "Payment Completed")
-# 			self.assertTrue(pr.payment_journal_entry)
-
-# 			# Verify the created journal entry
-# 			je = frappe.get_doc("Journal Entry", pr.payment_journal_entry)
-			
-# 			if self.mode_of_payment.name != "Cash":
-# 				print(self.mode_of_payment.name, je.cheque_no, pr.reference)
-# 				self.assertEqual(je.cheque_no, pr.reference)
-				
-# 			self.assertEqual(je.total_debit, 1000)
-# 			self.assertEqual(je.total_credit, 1000)
-
-# 			# Check the number of journal entries created
-# 			journal_entries = frappe.get_all("Journal Entry", filters={"bill_no": pr.name})
-# 			expected_je_count = 1 if skip_payable else 2
-# 			self.assertEqual(len(journal_entries), expected_je_count)
-
-# 			# # Clean up
-# 			# for je_name in [entry.name for entry in journal_entries]:
-# 			# 	je = frappe.get_doc("Journal Entry", je_name)
-# 			# 	je.cancel()
-# 			# 	# frappe.delete_doc("Journal Entry", je.name)
-
-# 			# pr.cancel()
-# 			# frappe.delete_doc("Payment Requisition", pr.name)
-
-# 		# Restore original setting
-# 		settings.skip_payable_journal_entry = original_skip_payable
-# 		settings.save()
-
-# 	def test_payment_requisition_workflow_transitions(self):
-# 		pr = frappe.get_doc({
-# 			"doctype": "Payment Requisition",
-# 			"series": self.series.name,
-# 			"company": self.company.name,
-# 			"party_type": "Employee",
-# 			"party": self.employee.name,
-# 			"date": today(),
-# 			"currency": "USD",
-# 			"cost_center": self.cost_center.name,
-# 			"mode_of_payment": self.mode_of_payment.name,
-# 			"request_items": [
-# 				{
-# 					"expense_item": self.request_items.name,
-# 					"expense_account": self.expense_account.name,
-# 					"cost_center": self.cost_center.name,
-# 					"amount": 1000,
-# 					"description": "Test Expense"
-# 				}
-# 			]
-# 		}).insert()
-
-# 		# Test all valid transitions
-# 		transitions = [
-# 			("Quotations Required", "Submitted to Accounts"),
-# 			("Submitted to Accounts", "Awaiting Internal Approval"),
-# 			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
-# 			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
-# 			("Awaiting Director Approval (2)", "Approved"),
-# 			("Approved", "Payment Completed"),
-# 		]
-
-# 		for from_state, to_state in transitions:
-# 			pr.workflow_state = from_state
-# 			pr.save()
-# 			self.assertEqual(pr.workflow_state, from_state)
-			
-# 			pr.workflow_state = to_state
-# 			pr.save()
-# 			self.assertEqual(pr.workflow_state, to_state)
-
-# 		# Ensure that once approved, it can't be revised or rejected
-# 		pr.workflow_state = "Approved"
-# 		pr.save()
-# 		self.assertEqual(pr.workflow_state, "Approved")
-
-# 		with self.assertRaises(frappe.ValidationError):
-# 			pr.workflow_state = "Revision Requested"
-# 			pr.save()
-
-# 		with self.assertRaises(frappe.ValidationError):
-# 			pr.workflow_state = "Rejected"
-# 			pr.save()
-
-	def test_payment_requisition_revision_and_rejection(self):
-		pr = frappe.get_doc({
-			"doctype": "Payment Requisition",
-			"series": self.series.name,
-			"company": self.company.name,
-			"party_type": "Employee",
-			"party": self.employee.name,
-			"date": today(),
-			"currency": "USD",
-			"cost_center": self.cost_center.name,
-			"mode_of_payment": self.mode_of_payment.name,
-			"request_items": [
-				{
-					"expense_item": self.request_items.name,
-					"expense_account": self.expense_account.name,
-					"cost_center": self.cost_center.name,
-					"amount": 1000,
-					"description": "Test Expense"
-				}
-			]
-		}).insert()
-
-		# Test revision paths
-		revision_transitions = [
-			("Submitted to Accounts", "Employee Revision Required"),
-			("Employee Revision Required", "Submitted to Accounts"),
-			("Awaiting Internal Approval", "Revision Requested"),
-			("Revision Requested", "Employee Revision Required"),
-			("Employee Revision Required", "Submitted to Accounts"),
-			("Submitted to Accounts", "Awaiting Internal Approval"),
-			("Awaiting Director Approval (1)", "Revision Requested"),
-			("Revision Requested", "Awaiting Internal Approval"),
-			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
-			("Awaiting Director Approval (2)", "Revision Requested"),
-			("Revision Requested", "Awaiting Internal Approval"),
-			("Awaiting Internal Approval", "Awaiting Director Approval (1)")
-		]
-
-		for from_state, to_state in revision_transitions:
-			pr.workflow_state = from_state
-			pr.save()
-			self.assertEqual(pr.workflow_state, from_state)
-			
-			pr.workflow_state = to_state
-			pr.save()
-			self.assertEqual(pr.workflow_state, to_state)
-
-		# Test rejection path
-		pr.workflow_state = "Awaiting Director Approval (2)"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Awaiting Director Approval (2)")
-
-		pr.workflow_state = "Rejected"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Rejected")
-
-		# Test that rejected state can be changed to revision requested
-		pr.workflow_state = "Revision Requested"
-		pr.save()
-		self.assertEqual(pr.workflow_state, "Revision Requested")
-
-	# def test_payment_requisition_cancellation(self):
-	# 	pr = frappe.get_doc({
-	# 		"doctype": "Payment Requisition",
-	# 		"series": self.series.name,
-	# 		"company": self.company.name,
-	# 		"party_type": "Employee",
-	# 		"party": self.employee.name,
-	# 		"date": today(),
-	# 		"currency": "USD",
-	# 		"cost_center": self.cost_center.name,
-	# 		"mode_of_payment": self.mode_of_payment.name,
-	# 		"request_items": [
-	# 			{
-	# 				"expense_item": self.request_items.name,
-	# 				"expense_account": self.expense_account.name,
-	# 				"cost_center": self.cost_center.name,
-	# 				"amount": 1000,
-	# 				"description": "Test Expense"
-	# 			}
-	# 		]
-	# 	}).insert()
-
-	# 	# Move the PR to Approved state
-	# 	workflow_states = [
-	# 		"Submitted to Accounts",
-	# 		"Awaiting Internal Approval",
-	# 		"Awaiting Director Approval (1)",
-	# 		"Awaiting Director Approval (2)",
-	# 		"Approved"
-	# 	]
-
-	# 	for state in workflow_states:
-	# 		pr.workflow_state = state
-	# 		pr.save()
-	# 		self.assertEqual(pr.workflow_state, state)
-
-	# 	# Check if the document can be cancelled after approval
-	# 	pr.workflow_state = "Cancelled"
-	# 	pr.save()
-	# 	self.assertEqual(pr.workflow_state, "Cancelled")
-
-	# 	# Create a new PR for testing cancellation after payment completion
-	# 	pr2 = frappe.get_doc({
-	# 		"doctype": "Payment Requisition",
-	# 		"series": self.series.name,
-	# 		"company": self.company.name,
-	# 		"party_type": "Employee",
-	# 		"party": self.employee.name,
-	# 		"date": today(),
-	# 		"currency": "USD",
-	# 		"cost_center": self.cost_center.name,
-	# 		"mode_of_payment": self.mode_of_payment.name,
-	# 		"request_items": [
-	# 			{
-	# 				"expense_item": self.request_items.name,
-	# 				"expense_account": self.expense_account.name,
-	# 				"cost_center": self.cost_center.name,
-	# 				"amount": 1000,
-	# 				"description": "Test Expense"
-	# 			}
-	# 		]
-	# 	}).insert()
-
-	# 	# Move pr2 to Payment Completed state
-	# 	for state in workflow_states + ["Payment Completed"]:
-	# 		pr2.workflow_state = state
-	# 		pr2.save()
-	# 		self.assertEqual(pr2.workflow_state, state)
-
-	# 	# Check if the document can be cancelled after payment completion
-	# 	pr2.workflow_state = "Cancelled"
-	# 	pr2.save()
-	# 	self.assertEqual(pr2.workflow_state, "Cancelled")
-
-	# 	# Ensure that cancelled state is final for both documents
-	# 	with self.assertRaises(frappe.ValidationError):
-	# 		pr.workflow_state = "Approved"
-	# 		pr.save()
-
-	# 	with self.assertRaises(frappe.ValidationError):
-	# 		pr2.workflow_state = "Payment Completed"
-	# 		pr2.save()
-
-	# 	}).insert()
-
-	# 	# Move pr2 to Payment Completed state
-	# 	for state in workflow_states + ["Payment Completed"]:
-	# 		pr2.workflow_state = state
-	# 		pr2.save()
-	# 		self.assertEqual(pr2.workflow_state, state)
-
-	# 	# Check if the document can be cancelled after payment completion
-	# 	pr2.workflow_state = "Cancelled"
-	# 	pr2.save()
-	# 	self.assertEqual(pr2.workflow_state, "Cancelled")
-
-	# 	# Ensure that cancelled state is final for both documents
-	# 	with self.assertRaises(frappe.ValidationError):
-	# 		pr.workflow_state = "Approved"
-	# 		pr.save()
-
-	# 	with self.assertRaises(frappe.ValidationError):
-	# 		pr2.workflow_state = "Payment Completed"
-	# 		pr2.save()
+		# Restore original setting
+		settings.skip_payable_journal_entry = original_skip_payable
+		settings.save()

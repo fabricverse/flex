@@ -7,8 +7,18 @@ frappe.ui.form.on("Payment Requisition", {
 		frm.set_value("deposit_amount", 0);
 		frm.refresh_field("deposit_amount");
 	},
-	
-	refresh: function(frm) {		
+	after_workflow_action: function(frm) {
+		return;
+		console.log(frm.doc.workflow_state);
+		if (["Submitted to Accounts", "Awaiting Internal Approval", "Awaiting Director Approval (1)", "Awaiting Director Approval (2)"].includes(frm.doc.workflow_state)) {
+			frm.set_value("skip_proof", 0);
+			frm.set_value("allow_incomplete_quotations", 0);
+			frm.refresh_field("skip_proof");
+			frm.refresh_field("allow_incomplete_quotations");
+			console.log("Updated skip_proof and allow_incomplete_quotations");
+		}
+	},
+	refresh: function(frm) {
 		
 		deposit_button = frm.fields_dict["expense_items"].grid.add_custom_button(__('Deposit Remainder'),
 			function() {

@@ -17,6 +17,7 @@
   "reference",
   "accounting_dimensions_section",
   "expense_account",
+  "expense_payable_account",
   "column_break_6",
   "cost_center",
   "project_information_section",
@@ -144,12 +145,21 @@
   {
    "fieldname": "column_break_hlen",
    "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fetch_from": "expense_item.payable_account",
+   "fieldname": "expense_payable_account",
+   "fieldtype": "Link",
+   "label": "Expense Payable Account",
+   "options": "Account",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-24 22:10:04.032199",
+ "modified": "2024-10-25 16:48:36.763163",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Requisition Expense Item",

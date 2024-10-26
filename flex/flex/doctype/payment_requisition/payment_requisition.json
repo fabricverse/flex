@@ -208,7 +208,7 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: (doc.workflow_state === \"Payment Due\" || doc.payable_journal_entry)",
+   "depends_on": "eval: (doc.workflow_state === \"Payment Due\" || doc.payable_journal_entry || doc.reference)",
    "fieldname": "reference",
    "fieldtype": "Data",
    "label": "Payment Reference/Cheque No",
@@ -344,7 +344,7 @@
   },
   {
    "allow_on_submit": 1,
-   "depends_on": "eval: (doc.workflow_state === \"Payment Due\" || doc.payable_journal_entry)",
+   "depends_on": "eval: (doc.workflow_state === \"Payment Due\" || doc.payable_journal_entry || doc.payment_date)",
    "fieldname": "payment_date",
    "fieldtype": "Date",
    "label": "Payment Date",
@@ -585,7 +585,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-24 22:00:52.647321",
+ "modified": "2024-10-25 16:31:41.101920",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
