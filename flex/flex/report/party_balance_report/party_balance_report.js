@@ -4,8 +4,7 @@ frappe.call({
     method: "flex.flex.report.party_balance_report.party_balance_report.has_multiple_companies",
     callback: function(r) {
         more_than_one_company_exists = String(r.message);
-        console.log("more_than_one_company_exists", more_than_one_company_exists);
-
+		
         frappe.query_reports["Party Balance Report"] = {
             "filters": [
                 {

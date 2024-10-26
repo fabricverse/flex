@@ -230,7 +230,22 @@ fixtures = [
     {
         "doctype": "Workflow State",
         "filters": {
-            "workflow_state_name": ["in", [state.state for state in frappe.get_doc("Workflow", "Payment Requisition").states if state.state]]
+            "workflow_state_name": ["in", [
+                "Quotations Required",
+                "Submitted to Accounts",
+                "Employee Revision Required",
+                "Awaiting Internal Approval",
+                "Awaiting Director Approval (1)",
+                "Awaiting Director Approval (2)",
+                "Payment Due",
+                "Capture Expenses",
+                "Revision Requested",
+                "Expense Revision",
+                "Accounts Approval",
+                "Cancelled",
+                "Rejected",
+                "Closed",
+            ]]
         }
     },    
     {
