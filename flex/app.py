@@ -6,6 +6,67 @@ def requisition_action(name, action):
     doc = frappe.get_doc("Payment Requisition", name)
     doc.requisition_action(action)
 
+@frappe.whitelist()
+def my_approvals_card_data():
+    user = frappe.session.user
+    workflow = frappe.get_doc("Workflow", "Payment Requisition")
+    transitions = workflow.transitions
+    user_roles = frappe.get_roles(user)
+    
+    # Create a list of states where the user has the required role
+    workflow_list = []
+    for row in transitions:
+        if row.allowed in user_roles:
+            workflow_list.append(row.state)
+    
+    # Remove duplicates if any
+    user_workflows = set(workflow_list)
+    
+    count = frappe.db.count("Payment Requisition", {
+        "workflow_state": ["in", user_workflows]
+    })
+
+    return {
+        "value": count,
+        "fieldtype": "Int",
+        "route_options": {
+            "workflow_state": ["in", workflow_list]
+        },
+        "route": ["payment-requisition"]
+    }
+
+@frappe.whitelist()
+def my_requisitions_card_data():
+    user_email = frappe.session.user
+    
+    # - my requisitions - pr names
+    #     - initiated by me
+    #     - payee employee is same as user
+
+    if user_email != "Administrator":
+        if not frappe.db.exists("Employee", {"user_id": user_email}) and not frappe.db.exists("Employee", {"personal_email": user_email}) and not frappe.db.exists("Employee", {"company_email": user_email}):
+            frappe.throw("You are not linked to any employee profile. Please ask your administrator help you with this.")
+    
+    pr_names = frappe.db.sql(f"""
+        SELECT pr.name
+        FROM `tabPayment Requisition` as pr
+        LEFT JOIN `tabEmployee` AS emp  
+        ON pr.party = emp.employee
+        WHERE pr.owner = '{user_email}'
+        OR (emp.user_id = '{user_email}' OR emp.personal_email = '{user_email}' OR emp.company_email = '{user_email}')
+    """)
+    count = len(pr_names)
+
+    return {
+        "value": count,
+        "fieldtype": "Int",
+        "route_options": {
+            "name": ["in", pr_names]
+        },
+        "route": ["payment-requisition"]
+    }
+
+
 # @frappe.whitelist()
 # def approve(doc, method):
 #     # define important variables
