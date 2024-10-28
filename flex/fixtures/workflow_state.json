@@ -75,15 +75,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-08-22 19:18:10.232293",
-  "name": "Ready for Submission",
-  "style": "Success",
-  "workflow_state_name": "Ready for Submission"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-10-23 18:48:06.054042",
   "name": "Payment Due",
   "style": "",

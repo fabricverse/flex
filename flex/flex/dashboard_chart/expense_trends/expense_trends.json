@@ -14,15 +14,19 @@
  "idx": 16,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-10-28 16:13:39.075129",
- "modified": "2024-10-28 16:14:30.882510",
+ "last_synced_on": "2024-10-28 17:26:35.572163",
+ "modified": "2024-10-28 17:27:14.562188",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Expense Trends",
  "number_of_groups": 0,
  "owner": "Administrator",
  "parent_document_type": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "All Finance"
+  }
+ ],
  "source": "",
  "time_interval": "Quarterly",
  "timeseries": 1,
