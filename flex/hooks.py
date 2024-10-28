@@ -247,6 +247,21 @@ fixtures = [
                 "Closed",
             ]]
         }
+    },       
+    {
+        "doctype": "Role",
+        "filters": {
+            "role_name": ["in", [
+                "All Finance",
+                "Director Approver Level 1",
+                "Director Approver Level 2",
+                "Board Director",
+                "Directors",
+                "Executive Director",
+                "Volunteer",
+                "Employee Self Service"
+            ]]
+        }
     },    
     {
         "doctype": "Workflow",

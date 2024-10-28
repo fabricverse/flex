@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 @frappe.whitelist()
@@ -18,6 +19,9 @@ def my_approvals_card_data():
     for row in transitions:
         if row.allowed in user_roles:
             workflow_list.append(row.state)
+
+    # remove non-approval states
+    workflow_list = [state for state in workflow_list if state not in ("Quotations Required", "Employee Revision Required", "Capture Expenses", "Revision Requested", "Expense Revision", "Cancelled", "Rejected")]
     
     # Remove duplicates if any
     user_workflows = set(workflow_list)

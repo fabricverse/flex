@@ -3,9 +3,8 @@
 // console.log("payment requisition list");
 
 // frappe.listview_settings["Payment Requisition"] = {
-// 	// add_fields: ["total"],
+// 	add_fields: ["total"],
 //     get_indicator: function (doc) {
-//         console.log('doc', doc);
 // 		const status_colors = {
 // 			"Quotations Required": "grey",
 // 			"Submitted to Accounts": "grey",
@@ -26,11 +25,16 @@
 //             "Payment Completed": "blue"
 // 		};
 // 		return [__(doc.workflow_state), status_colors[doc.workflow_state], "workflow_state,=," + doc.workflow_state];
-// 	},
-// 	// right_column: "total",
-//     refresh(listview, doc) {
+//     },
+//     refresh: function(listview, doc) {
 //         console.log(listview.data, doc);
 //     }
+// }
+
+
+// 	},
+// 	// right_column: "total",
+//     
 // };
 
 // right_column_title: "Expenses",
