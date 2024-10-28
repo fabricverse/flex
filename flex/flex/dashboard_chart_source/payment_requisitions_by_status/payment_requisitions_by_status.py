@@ -33,26 +33,24 @@ def get(
 
 	# use sql to get the count of payment requisitions by status
 	requisitions = frappe.db.sql("""
+		WITH all_statuses AS (
+			SELECT 'Completed' as status
+			UNION ALL SELECT 'For Approval'
+			UNION ALL SELECT 'Rest'
+		)
 		SELECT 
+			s.status,
+			COALESCE(COUNT(pr.name), 0) as count
+		FROM all_statuses s
+		LEFT JOIN `tabPayment Requisition` pr ON 
 			CASE 
-				WHEN workflow_state IN %s THEN "Completed"
-				WHEN workflow_state IN %s THEN "For Approval"
-				WHEN workflow_state IN %s THEN "Rest"
-			END as status,
-			COUNT(*) as count
-		FROM `tabPayment Requisition`
-		WHERE (workflow_state IN %s OR workflow_state IN %s OR workflow_state IN %s)
-			AND company = %s
-		GROUP BY 
-			CASE 
-				WHEN workflow_state IN %s THEN "Completed"
-				WHEN workflow_state IN %s THEN "For Approval"
-				WHEN workflow_state IN %s THEN "Rest"
-			END
-	""", (primary_statuses, pending_approval_statuses, other_statuses,
-		  primary_statuses, pending_approval_statuses, other_statuses,
-		  company,
-		  primary_statuses, pending_approval_statuses, other_statuses), as_dict=1)
+				WHEN pr.workflow_state IN %s THEN 'Completed'
+				WHEN pr.workflow_state IN %s THEN 'For Approval'
+				WHEN pr.workflow_state IN %s THEN 'Rest'
+			END = s.status
+			AND pr.company = %s
+		GROUP BY s.status
+	""", (primary_statuses, pending_approval_statuses, other_statuses, company), as_dict=1)
 
 	if not requisitions:
 		return []
