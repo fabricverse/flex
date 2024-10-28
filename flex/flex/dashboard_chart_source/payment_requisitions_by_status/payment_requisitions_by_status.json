@@ -3,11 +3,11 @@
  "docstatus": 0,
  "doctype": "Dashboard Chart Source",
  "idx": 0,
- "modified": "2024-10-28 10:37:13.653481",
+ "modified": "2024-10-28 16:46:24.375472",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisitions by Status",
  "owner": "Administrator",
  "source_name": "Payment Requisitions by Status",
- "timeseries": 0
+ "timeseries": 1
 }

@@ -19,15 +19,18 @@ def get(
 	labels, datapoints = [], []
 	filters = frappe.parse_json(filters)
 
+
+	# frappe.errprint(filters)
+	# frappe.errprint(timespan)
+
 	# filter the payment requisitions by status
 	pending_approval_statuses = ("Submitted to Accounts", "Awaiting Internal Approval", 
 							   "Awaiting Director Approval (1)", "Awaiting Director Approval (2)", 
 							   "Accounts Approval", "Payment Due")
-	primary_statuses = ("Accounts Approval",) #("Closed",)
+	primary_statuses = ("Closed",)
 	other_statuses = ("Quotations Required", "Employee Revision Required", 
-						"Capture Expenses", "Revision Requested", 
-						"Expense Revision")
-						#"Cancelled", "Rejected", 
+						"Capture Expenses", "Revision Requested",
+						"Expense Revision", "Cancelled", "Rejected")
 	
 	company = frappe.defaults.get_user_default("Company")
 
@@ -37,7 +40,7 @@ def get(
 			CASE 
 				WHEN workflow_state IN %s THEN "Completed"
 				WHEN workflow_state IN %s THEN "For Approval"
-				WHEN workflow_state IN %s THEN "Rest"
+				WHEN workflow_state IN %s THEN "Others"
 			END as status,
 			COUNT(*) as count
 		FROM `tabPayment Requisition`
@@ -47,7 +50,7 @@ def get(
 			CASE 
 				WHEN workflow_state IN %s THEN "Completed"
 				WHEN workflow_state IN %s THEN "For Approval"
-				WHEN workflow_state IN %s THEN "Rest"
+				WHEN workflow_state IN %s THEN "Others"
 			END
 	""", (primary_statuses, pending_approval_statuses, other_statuses,
 		  primary_statuses, pending_approval_statuses, other_statuses,
@@ -64,6 +67,5 @@ def get(
 	return {
 		"labels": labels,
 		"datasets": [{"name": _("Payment Requisitions"), "values": datapoints}],
-		"type": "donut",
-		"timespan": "Last Year",
+		"type": "donut"
 	}
