@@ -16,15 +16,19 @@
  "idx": 0,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-10-28 16:38:42.759295",
- "modified": "2024-10-28 16:53:49.088171",
+ "last_synced_on": "2024-10-28 17:27:17.302379",
+ "modified": "2024-10-28 17:27:33.352490",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition Approvals",
  "number_of_groups": 3,
  "owner": "mpz@mpz.com",
  "parent_document_type": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "All Finance"
+  }
+ ],
  "source": "Payment Requisitions by Status",
  "time_interval": "Quarterly",
  "timeseries": 0,

@@ -256,7 +256,7 @@ fixtures = [
                 "Director Approver Level 1",
                 "Director Approver Level 2",
                 "Board Director",
-                "Directors",
+                "Director",
                 "Executive Director",
                 "Volunteer",
                 "Employee Self Service"

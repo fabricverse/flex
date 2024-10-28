@@ -22,7 +22,7 @@
  "is_hidden": 0,
  "label": "Finance",
  "links": [],
- "modified": "2024-10-28 14:16:48.495279",
+ "modified": "2024-10-28 18:44:16.568745",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Finance",
@@ -63,9 +63,21 @@
   },
   {
    "role": "All Finance"
+  },
+  {
+   "role": "Director"
+  },
+  {
+   "role": "Board Director"
+  },
+  {
+   "role": "Director Approver Level 1"
+  },
+  {
+   "role": "Director Approver Level 2"
   }
  ],
- "sequence_id": 3.0,
+ "sequence_id": 4.0,
  "shortcuts": [
   {
    "color": "Green",

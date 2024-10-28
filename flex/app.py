@@ -25,6 +25,14 @@ def my_approvals_card_data():
     
     # Remove duplicates if any
     user_workflows = set(workflow_list)
+
+    if len(user_workflows) == 0:
+        return {
+            "value": 0,
+            "fieldtype": "Int",
+            "route_options": {},
+            "route": ["payment-requisition"]
+        }
     
     count = frappe.db.count("Payment Requisition", {
         "workflow_state": ["in", user_workflows]
@@ -41,15 +49,17 @@ def my_approvals_card_data():
 
 @frappe.whitelist()
 def my_requisitions_card_data():
-    user_email = frappe.session.user
-    
-    # - my requisitions - pr names
-    #     - initiated by me
-    #     - payee employee is same as user
+    user_email = frappe.session.User
 
     if user_email != "Administrator":
         if not frappe.db.exists("Employee", {"user_id": user_email}) and not frappe.db.exists("Employee", {"personal_email": user_email}) and not frappe.db.exists("Employee", {"company_email": user_email}):
-            frappe.throw("You are not linked to any employee profile. Please ask your administrator help you with this.")
+            frappe.msgprint("You are not linked to any employee profile. Your administrator can help you with this.", indicator="warning", alert=True)
+            return {
+                "value": 0,
+                "fieldtype": "Int",
+                "route_options": {},
+                "route": ["payment-requisition"]
+            }
     
     pr_names = frappe.db.sql(f"""
         SELECT pr.name
