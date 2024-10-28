@@ -1,15 +1,15 @@
 {
  "charts": [
   {
-   "chart_name": "Payment Requisition Process Rate",
-   "label": "Payment Approvals This Week"
+   "chart_name": "Payment Requisition Approvals",
+   "label": "Payment Requisition Approvals"
   },
   {
-   "chart_name": "Annual Expendure",
+   "chart_name": "Expense Trends",
    "label": "Expense Trends"
   }
  ],
- "content": "[{\"id\":\"aJX8K8Elxp\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Approvals This Week\",\"col\":6}},{\"id\":\"iW4o2xuOpx\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Expense Trends\",\"col\":6}},{\"id\":\"DbVS9WgxbM\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Payments Approved This Month\",\"col\":3}},{\"id\":\"FwdDO2bg9Y\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Payment Approvals\",\"col\":3}},{\"id\":\"hFM5Z0eYEF\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Approvals\",\"col\":3}},{\"id\":\"FMVlax0mGj\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Requisitions\",\"col\":3}},{\"id\":\"L8ovYr0Uil\",\"type\":\"paragraph\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"gcHH77b8Gg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Payment Requisition\",\"col\":3}},{\"id\":\"MXAzjxAaA-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Requisition List\",\"col\":3}}]",
+ "content": "[{\"id\":\"gORKPhJZI9\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Requisition Approvals\",\"col\":6}},{\"id\":\"iW4o2xuOpx\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Expense Trends\",\"col\":6}},{\"id\":\"FwdDO2bg9Y\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"All Pending Requisitions\",\"col\":3}},{\"id\":\"DbVS9WgxbM\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Payments Approved\",\"col\":3}},{\"id\":\"hFM5Z0eYEF\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Approvals\",\"col\":3}},{\"id\":\"FMVlax0mGj\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Requisitions\",\"col\":3}},{\"id\":\"L8ovYr0Uil\",\"type\":\"paragraph\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"gcHH77b8Gg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Payment Requisition\",\"col\":3}},{\"id\":\"MXAzjxAaA-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Requisition List\",\"col\":3}},{\"id\":\"zocc--DexL\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
  "creation": "2024-08-26 15:27:34.892595",
  "custom_blocks": [],
  "docstatus": 0,
@@ -22,15 +22,11 @@
  "is_hidden": 0,
  "label": "Finance",
  "links": [],
- "modified": "2024-10-26 20:50:00.209692",
- "modified_by": "mpz@mpz.com",
+ "modified": "2024-10-28 14:16:48.495279",
+ "modified_by": "Administrator",
  "module": "Flex",
  "name": "Finance",
  "number_cards": [
-  {
-   "label": "Payments Approved This Month",
-   "number_card_name": "Payments Approved This Month"
-  },
   {
    "label": "My Approvals",
    "number_card_name": "My Approvals"
@@ -40,7 +36,11 @@
    "number_card_name": "My Requisitions"
   },
   {
-   "label": "Pending Payment Approvals",
+   "label": "Payments Approved",
+   "number_card_name": "Payments Approved This Month"
+  },
+  {
+   "label": "All Pending Requisitions",
    "number_card_name": "Pending Payment Approvals"
   }
  ],
