@@ -226,7 +226,68 @@ doc_events = {
 # Fixtures
 # --------
 
-fixtures = [    
+fixtures = [        
+    {
+        "doctype": "Role",
+        "filters": {
+            "role_name": ["in", [
+                "All Finance",
+                "Director Approver Level 1",
+                "Director Approver Level 2",
+                "Board Director",
+                "Director",
+                "Executive Director",
+                "Volunteer",
+                "Employee Self Service"
+            ]]
+        }
+    },    
+    {
+        "doctype": "Property Setter",
+        "filters": {
+            "doc_type": ["in", [
+                "Cost Center",
+                "Account",
+                "Project",
+                "Supplier",
+                "Task",
+                "User",
+                "Mode of Payment",
+                "Task",
+                "Activity Type",
+                "Volunteer Log",
+                "Journal Entry",
+                "Payment Requisition",
+                "Payment Requisition Settings",
+                "Expense Item",
+                "Document Series",
+                "File"
+            ]]
+        }
+    },
+    {
+        "doctype": "Custom DocPerm",
+        "filters": {
+            "parent": ["in", [
+                "Cost Center",
+                "Account",
+                "Project",
+                "Supplier",
+                "Task",
+                "User",
+                "Mode of Payment",
+                "Task",
+                "Activity Type",
+                "Volunteer Log",
+                "Journal Entry",
+                "Payment Requisition",
+                "Payment Requisition Settings",
+                "Expense Item",
+                "Document Series",
+                "File"
+            ]]
+        }
+    },
     {
         "doctype": "Workflow State",
         "filters": {
@@ -247,22 +308,7 @@ fixtures = [
                 "Closed",
             ]]
         }
-    },       
-    {
-        "doctype": "Role",
-        "filters": {
-            "role_name": ["in", [
-                "All Finance",
-                "Director Approver Level 1",
-                "Director Approver Level 2",
-                "Board Director",
-                "Director",
-                "Executive Director",
-                "Volunteer",
-                "Employee Self Service"
-            ]]
-        }
-    },    
+    },   
     {
         "doctype": "Workflow",
         "filters": {
