@@ -460,7 +460,7 @@ class PaymentRequisition(Document):
         employee_account = self.get_employee_account(self.party)
         accounts = [
             {
-                'debit_in_account_currency': float(self.total) * self.conversion_rate,
+                'debit_in_account_currency': float(self.total) * (self.conversion_rate or 1),
                 'user_remark': str(self.remarks or ""),
                 'account': employee_account,
                 'cost_center': self.cost_center,
@@ -470,7 +470,7 @@ class PaymentRequisition(Document):
                 'project': self.project_name
             },
             {
-                'credit_in_account_currency': float(self.total) * self.conversion_rate,
+                'credit_in_account_currency': float(self.total) * (self.conversion_rate or 1),
                 'user_remark': str(self.remarks or ""),
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
@@ -550,7 +550,7 @@ class PaymentRequisition(Document):
         # add employee account detail from which the expense is incurred
         accounts = [
             {
-                'credit_in_account_currency': float(self.total) * self.conversion_rate,
+                'credit_in_account_currency': float(self.total) * (self.conversion_rate or 1),
                 'exchange_rate': self.conversion_rate,                
                 'account': employee_account,
                 'project': self.project_name,
@@ -564,7 +564,7 @@ class PaymentRequisition(Document):
         for detail in self.expense_items:
             reference = " reference: " + detail.reference if detail.reference else ""
             accounts.append({
-                'debit_in_account_currency': float(detail.amount) * self.conversion_rate,
+                'debit_in_account_currency': float(detail.amount) * (self.conversion_rate or 1),
                 'exchange_rate': self.conversion_rate,
                 'user_remark': str((detail.description + reference) or ""),
                 'account': detail.expense_account,
@@ -577,7 +577,7 @@ class PaymentRequisition(Document):
         # add deposit of unspent amount
         if flt(self.deposit_amount) > 0:
             accounts.append({
-                'debit_in_account_currency': float(self.deposit_amount) * self.conversion_rate,
+                'debit_in_account_currency': float(self.deposit_amount) * (self.conversion_rate or 1),
                 'user_remark': "Deposit of unspent amount reference: " + self.deposit_reference,
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
@@ -643,11 +643,13 @@ class PaymentRequisition(Document):
                 self.party,
             )
             
-            if account_key in account_entries:
-                account_entries[account_key]['debit_in_account_currency'] += float(detail.amount) * self.conversion_rate
+            if account_key in account_entries: 
+                # increment existing entry amount amount
+                account_entries[account_key]['debit_in_account_currency'] += float(detail.amount) * (self.conversion_rate or 1)
             else:
+                # add entry
                 account_entries[account_key] = {
-                    'debit_in_account_currency': float(detail.amount) * self.conversion_rate,
+                    'debit_in_account_currency': float(detail.amount) * (self.conversion_rate or 1),
                     'user_remark': str(detail.description),
                     'account': detail.expense_account,
                     'project': detail.project,
@@ -678,15 +680,15 @@ class PaymentRequisition(Document):
             
             if account_key in account_entries:
                 if 'credit_in_account_currency' in account_entries[account_key]:
-                    account_entries[account_key]['credit_in_account_currency'] += float(detail.amount) * self.conversion_rate
+                    account_entries[account_key]['credit_in_account_currency'] += float(detail.amount) * (self.conversion_rate or 1)
                 else:
-                    account_entries[account_key]['credit_in_account_currency'] = float(detail.amount) * self.conversion_rate
+                    account_entries[account_key]['credit_in_account_currency'] = float(detail.amount) * (self.conversion_rate or 1)
                     account_entries[account_key]['user_remark'] = 'Amount payable to supplier'
                     account_entries[account_key]['account'] = payable_account
             else:
 
                 account_entries[account_key] = {
-                    'credit_in_account_currency': float(detail.amount) * self.conversion_rate,
+                    'credit_in_account_currency': float(detail.amount) * (self.conversion_rate or 1),
                     'user_remark': 'Amount payable to supplier',
                     'account': payable_account,
                     'project': detail.project,
@@ -698,6 +700,7 @@ class PaymentRequisition(Document):
         # Prepare accounts list
         
         accounts = list(account_entries.values())
+        print(accounts)
 
         # Create the journal entry document
         je = frappe.get_doc({
@@ -736,12 +739,12 @@ class PaymentRequisition(Document):
             )
             
             if account_key in account_entries:
-                account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount * self.conversion_rate, 3)
+                account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount * (self.conversion_rate or 1), 3)
                 
                 account_entries[account_key]['account'] = expense_payable_account
             else:
                 account_entries[account_key] = {
-                    'debit_in_account_currency': flt(detail.amount * self.conversion_rate, 3),
+                    'debit_in_account_currency': flt(detail.amount * (self.conversion_rate or 1), 3),
                     'user_remark': str(detail.description),
                     'account': expense_payable_account,
                     'project': detail.project,
@@ -781,7 +784,7 @@ class PaymentRequisition(Document):
         # add deposit of unspent amount
         if flt(self.deposit_amount) > 0:
             accounts.append({
-                'debit_in_account_currency': flt(self.deposit_amount) * self.conversion_rate,
+                'debit_in_account_currency': flt(self.deposit_amount) * (self.conversion_rate or 1),
                 'user_remark': "Deposit of unspent amount reference: " + self.deposit_reference,
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
@@ -793,7 +796,7 @@ class PaymentRequisition(Document):
         
         # Add the payment entry
         accounts.append({
-            'credit_in_account_currency': flt(self.total * self.conversion_rate, 3),
+            'credit_in_account_currency': flt(self.total * (self.conversion_rate or 1), 3),
             'user_remark': str(self.remarks),
             'account': pay_account,
             'cost_center': self.cost_center

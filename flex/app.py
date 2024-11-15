@@ -21,7 +21,22 @@ def my_approvals_card_data():
             workflow_list.append(row.state)
 
     # remove non-approval states
-    workflow_list = [state for state in workflow_list if state not in ("Quotations Required", "Employee Revision Required", "Capture Expenses", "Revision Requested", "Expense Revision", "Cancelled", "Rejected")]
+    # workflow_list = [state for state in workflow_list if state not in ("Quotations Required", "Employee Revision Required", "Capture Expenses", "Revision Requested", "Expense Revision", "Cancelled", "Rejected")]
+
+    my_approval_workflows = []
+    if "Executive Director" in user_roles:
+        my_approval_workflows.append("Awaiting Internal Approval")
+    if "Director Approver Level 1" in user_roles:
+        my_approval_workflows.append("Awaiting Director Approval (1)")
+    if "Director Approver Level 2" in user_roles:
+        my_approval_workflows.append("Awaiting Director Approval (2)")
+    if "Accounts User" in user_roles or "Accounts Manager" in user_roles:
+        my_approval_workflows.append("Submitted to Accounts")
+        my_approval_workflows.append("Accounts Approval")
+
+
+    workflow_list = [state for state in workflow_list if state in my_approval_workflows]
+
     
     # Remove duplicates if any
     user_workflows = set(workflow_list)
@@ -49,15 +64,27 @@ def my_approvals_card_data():
 
 @frappe.whitelist()
 def my_requisitions_card_data():
-    user_email = frappe.session.User
+    user_email = frappe.session.user
+    pr_names = ['0']
 
-    if user_email != "Administrator":
-        if not frappe.db.exists("Employee", {"user_id": user_email}) and not frappe.db.exists("Employee", {"personal_email": user_email}) and not frappe.db.exists("Employee", {"company_email": user_email}):
-            frappe.msgprint("You are not linked to any employee profile. Your administrator can help you with this.", indicator="warning", alert=True)
+    if user_email != "Administrator": # Check if user is linked to any employee profile
+        employee_exists = frappe.db.sql("""
+            SELECT 1
+            FROM `tabEmployee`
+            WHERE user_id = %s
+                OR personal_email = %s
+                OR company_email = %s
+            LIMIT 1
+        """, (user_email, user_email, user_email))
+
+        if not employee_exists:
+            frappe.msgprint("You are not linked to any employee profile. Ask your administrator to help you with this.", indicator="warning", alert=True)
             return {
                 "value": 0,
                 "fieldtype": "Int",
-                "route_options": {},
+                "route_options": {
+                    "name": ["in", pr_names]
+                },
                 "route": ["payment-requisition"]
             }
     

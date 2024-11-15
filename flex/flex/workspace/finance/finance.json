@@ -9,7 +9,7 @@
    "label": "Expense Trends"
   }
  ],
- "content": "[{\"id\":\"gORKPhJZI9\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Requisition Approvals\",\"col\":6}},{\"id\":\"iW4o2xuOpx\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Expense Trends\",\"col\":6}},{\"id\":\"FwdDO2bg9Y\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"All Pending Requisitions\",\"col\":3}},{\"id\":\"DbVS9WgxbM\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Payments Approved\",\"col\":3}},{\"id\":\"hFM5Z0eYEF\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Approvals\",\"col\":3}},{\"id\":\"FMVlax0mGj\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Requisitions\",\"col\":3}},{\"id\":\"L8ovYr0Uil\",\"type\":\"paragraph\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"gcHH77b8Gg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Payment Requisition\",\"col\":3}},{\"id\":\"MXAzjxAaA-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Requisition List\",\"col\":3}},{\"id\":\"zocc--DexL\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
+ "content": "[{\"id\":\"gORKPhJZI9\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Requisition Approvals\",\"col\":6}},{\"id\":\"iW4o2xuOpx\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Expense Trends\",\"col\":6}},{\"id\":\"FwdDO2bg9Y\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"All Pending Requisitions\",\"col\":3}},{\"id\":\"DbVS9WgxbM\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Payments Approved\",\"col\":3}},{\"id\":\"hFM5Z0eYEF\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Approvals\",\"col\":3}},{\"id\":\"FMVlax0mGj\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"My Requisitions\",\"col\":3}},{\"id\":\"L8ovYr0Uil\",\"type\":\"paragraph\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"gcHH77b8Gg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Payment Requisition\",\"col\":3}},{\"id\":\"MXAzjxAaA-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Requisition List\",\"col\":3}},{\"id\":\"zocc--DexL\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"g59EeAH3Bn\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":6}}]",
  "creation": "2024-08-26 15:27:34.892595",
  "custom_blocks": [],
  "docstatus": 0,
@@ -21,8 +21,28 @@
  "indicator_color": "",
  "is_hidden": 0,
  "label": "Finance",
- "links": [],
- "modified": "2024-10-28 18:44:16.568745",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Party Balance Report",
+   "link_count": 0,
+   "link_to": "Party Balance Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2024-11-14 17:42:15.708156",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Finance",
@@ -90,10 +110,10 @@
   {
    "color": "Orange",
    "doc_view": "List",
-   "format": "{} Pending",
+   "format": "{} Open",
    "label": "Payment Requisition List",
    "link_to": "Payment Requisition",
-   "stats_filter": "[[\"Payment Requisition\",\"workflow_state\",\"not in\",[\"Payment Completed\",\"Pending\",\"Cancelled\",\"Rejected\"],false]]",
+   "stats_filter": "[[\"Payment Requisition\",\"workflow_state\",\"not in\",[\"Closed\",\"Pending\",\"Cancelled\",\"Rejected\"],false]]",
    "type": "DocType"
   }
  ],
