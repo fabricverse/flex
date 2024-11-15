@@ -19,7 +19,7 @@ function toggle_display_sections(frm) {
 	let condition = false;
 	if (!frm.doc.workflow_state){ // before wf is set
 		display_sections = all_sections.filter(field => !not_set.includes(field));
-		console.log("no workflow set", frm.doc.workflow_state)
+		// console.log("no workflow set", frm.doc.workflow_state)
 	}
 	else if (frm.doc.workflow_state === 'Quotations Required'){
 		display_sections = all_sections.filter(field => !quotation_required_sections.includes(field));
@@ -33,16 +33,16 @@ function toggle_display_sections(frm) {
 	else if (frm.doc.workflow_state === 'Payment Due'){
 		display_sections = all_sections.filter(field => !payment_due.includes(field));
 	}
-	else if (['Capture Expenses', 'Accounts Approval', 'Closed'].includes(frm.doc.workflow_state)){
-		display_sections = all_sections.filter(field => !capture_expenses.includes(field));
-	}
+	// else if (['Capture Expenses', 'Accounts Approval', 'Closed'].includes(frm.doc.workflow_state)){
+	// 	display_sections = all_sections.filter(field => !capture_expenses.includes(field));
+	// }
 	else {
 		// show all
 		display_sections = all_sections;
 		condition = true;
 	}
 
-	console.log("display_sections", display_sections, frm.doc.workflow_state);
+	// console.log("display_sections", display_sections, frm.doc.workflow_state);
 	
 	return {
 		fields: display_sections,
@@ -70,17 +70,23 @@ frappe.ui.form.on("Payment Requisition", {
 		frm.refresh_field("deposit_amount");
 	},
 	after_workflow_action: function(frm) {
-		return;
-		console.log(frm.doc.workflow_state);
-		if (["Submitted to Accounts", "Awaiting Internal Approval", "Awaiting Director Approval (1)", "Awaiting Director Approval (2)"].includes(frm.doc.workflow_state)) {
-			frm.set_value("skip_proof", 0);
-			frm.set_value("allow_incomplete_quotations", 0);
-			frm.refresh_field("skip_proof");
-			frm.refresh_field("allow_incomplete_quotations");
-			console.log("Updated skip_proof and allow_incomplete_quotations");
-		}
+		// TODO: move to py
+		// if (["Submitted to Accounts", "Awaiting Internal Approval", "Awaiting Director Approval (1)", "Awaiting Director Approval (2)"].includes(frm.doc.workflow_state)) {
+		// 	frm.set_value("skip_proof", 0);
+		// 	frm.set_value("allow_incomplete_quotations", 0);
+		// 	frm.refresh_field("skip_proof");
+		// 	frm.refresh_field("allow_incomplete_quotations");
+		// }
+		
+		// console.log('refreshed')
+		// frm.refresh();
 	},
 	refresh: function(frm) {
+		let {fields, condition} = toggle_display_sections(frm);
+		frm.toggle_display(fields, condition);
+
+		fields.forEach(field => refresh_field(field));
+		
 		frm.get_field("btn_deposit_remainder").$input.addClass("btn-primary");
 		frm.get_field("btn_reset_deposit").$input.addClass("btn-danger");
 
@@ -89,8 +95,6 @@ frappe.ui.form.on("Payment Requisition", {
 		}
 
 		// get_sections_to_hide(frm)
-		let {fields, condition} = toggle_display_sections(frm);
-		frm.toggle_display(fields, condition);
 		// all_sections = [
 		// 	'section_transaction', 'section_currency', 'section_posting', 'section_request_items', 'section_request_totals', 
 		// 	'section_attachments', 'section_remarks',
@@ -155,7 +159,7 @@ frappe.ui.form.on("Payment Requisition", {
 					frm.refresh_field("expense_items");
 				}
 			);
-			frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default');
+			frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default').addClass('btn-primary');
 
 		}
 		// frm.dashboard.show_progress(
@@ -545,7 +549,7 @@ function validate_quotations(frm) {
 	if (['Quotations Required', 'Submitted to Accounts', 'Ready for Submission'].includes(frm.doc.workflow_state)) {
 		if (frm.doc.allow_incomplete_quotations === 0 && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
 			frappe.dom.unfreeze();
-			frappe.throw(__("Please upload all quotations or tick the <strong>Allow Incomplete Quotations</strong> checkbox. To proceed without all required quotations."));
+			frappe.throw(__("Please upload all quotations or tick the <strong>Save with incomplete quotations</strong> checkbox. To proceed without all required quotations."));
 		}
 	}
 }
@@ -566,7 +570,7 @@ function verify_workflow_action(frm) {
                     reject(new Error("Action cancelled by user"));
                 }
             );
-        } else if (['Reject', 'Cancel', 'Request Revision', 'Request Employee Revision'].includes(action)) {
+        } else if (['Reject', 'Cancel', 'Request Revision', 'Request Employee Revision', 'Request Expense Revision'].includes(action)) {
             console.log(3, "Reject/Cancel/Request Revision", action);
             
             frappe.prompt(
@@ -595,6 +599,9 @@ function verify_workflow_action(frm) {
                                 }
                             }
                         });
+						// frm.set_value('approval_comment', data.approval_comment)
+						// frm.set_value('workflow_state', )
+						frm.refresh_field('approval_comment')
                     } else {
                         frappe.validated = false;
                         reject(new Error("No comment provided"));

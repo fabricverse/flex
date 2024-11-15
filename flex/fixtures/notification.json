@@ -11,10 +11,10 @@
   "enabled": 1,
   "event": "Value Change",
   "is_standard": 0,
-  "message": "Hello\n\n<p><strong>{{ doc.doctype }}</strong> {{ doc.name }} has a new status: {{ doc.workflow_state }}</p>\n\n<p>You may view and take action on {{ doc.doctype }} by clicking the link below, or view the attachment.</p>\n</br>\n\n<p><a style=\"btn-lg btn btn-primary primary-action\" href=\"{{doc.get_url()}}\"> {{doc.doctype}} </a></p>\n\n<br>\n<p>Regards,<br>\nFinance Team\n</p>\n\n<p>\n    <strong>Malaria Partners Zambia</strong>\n</p>\n",
+  "message": "Hello\n</br>\n<p>{{ doc.doctype }} {{ doc.name }} has a new status: <strong>{{ doc.workflow_state }}</strong></p>\n\n<p>You may view and take action on {{ doc.doctype }} by clicking the link below, or view the attachment.</p>\n</br>\n\n<p><a style=\"btn-lg btn btn-primary primary-action\" href=\"{{doc.get_url()}}\"> {{doc.doctype}} </a></p>\n\n<br>\n<p>Regards,<br>\nFinance Team\n</p>\n\n<p>\n    <strong>Malaria Partners Zambia</strong>\n</p>\n",
   "message_type": "Markdown",
   "method": null,
-  "modified": "2024-09-07 12:03:56.924736",
+  "modified": "2024-11-15 19:42:33.889817",
   "module": "Flex",
   "name": "Payment Requisition Approval",
   "print_format": "Payment Requisition Print",
@@ -23,7 +23,7 @@
    {
     "bcc": "",
     "cc": null,
-    "condition": "doc.workflow_state in [\"Awaiting Internal Approval\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
+    "condition": "doc.workflow_state in [\"Awaiting Internal Approval\", \"Revision Requested\", \"Rejected\", \"Payment Due\"]",
     "parent": "Payment Requisition Approval",
     "parentfield": "recipients",
     "parenttype": "Notification",
@@ -62,10 +62,10 @@
   "enabled": 1,
   "event": "Value Change",
   "is_standard": 0,
-  "message": "Hello\n\n<p><strong>{{ doc.doctype }}</strong> {{ doc.name }} has a new status: {{ doc.workflow_state }}</p>\n\n<p>You may view and take action on {{ doc.doctype }} by clicking the link below, or view the attachment.</p>\n</br>\n\n<p><a style=\"btn-lg btn btn-primary primary-action\" href=\"{{doc.get_url()}}\"> {{doc.doctype}} </a></p>\n\n<br>\n<p>Regards,<br>\nFinance Team\n</p>\n\n<p>\n    <strong>Malaria Partners Zambia</strong>\n</p>\n",
+  "message": "Hello\n</br>\n<p>{{ doc.doctype }} {{ doc.name }} has a new status: <strong>{{ doc.workflow_state }}</strong></p>\n\n<p>You may view and take action on {{ doc.doctype }} by clicking the link below, or view the attachment.</p>\n</br>\n\n<p><a style=\"btn-lg btn btn-primary primary-action\" href=\"{{doc.get_url()}}\"> {{doc.doctype}} </a></p>\n\n<br>\n<p>Regards,<br>\nFinance Team\n</p>\n\n<p>\n    <strong>Malaria Partners Zambia</strong>\n</p>\n",
   "message_type": "Markdown",
   "method": null,
-  "modified": "2024-09-07 12:04:16.430035",
+  "modified": "2024-11-15 19:42:21.271301",
   "module": "Flex",
   "name": "Requisition Workflow Action Required",
   "print_format": "Payment Requisition Print",
@@ -89,7 +89,7 @@
     "parentfield": "recipients",
     "parenttype": "Notification",
     "receiver_by_document_field": null,
-    "receiver_by_role": "Board Director L1"
+    "receiver_by_role": "Director Approver Level 1"
    },
    {
     "bcc": "",
@@ -99,7 +99,7 @@
     "parentfield": "recipients",
     "parenttype": "Notification",
     "receiver_by_document_field": null,
-    "receiver_by_role": "Board Director L2"
+    "receiver_by_role": "Director Approver Level 2"
    }
   ],
   "send_system_notification": 1,

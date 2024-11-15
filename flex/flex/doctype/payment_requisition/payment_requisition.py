@@ -60,8 +60,6 @@ class PaymentRequisition(Document):
         elif self.workflow_state == "Cancelled":
             # cancel related journal entries
             self.before_cancel()
-            if self.docstatus != 2:
-                self.docstatus = 2
 
                 
     def validate_totals(self):
@@ -333,8 +331,9 @@ class PaymentRequisition(Document):
         for journal in journals:
             frappe.db.set_value("Journal Entry", journal.name, "docstatus", 2)
 
-        if self.workflow_state != "Cancelled":
-            self.workflow_state = "Cancelled"
+        # if self.workflow_state != "Cancelled":
+        self.workflow_state = "Cancelled"        
+        self.docstatus = 1
     
         frappe.db.commit()
 
@@ -393,8 +392,8 @@ class PaymentRequisition(Document):
             else:
                 parent = parent[0].name            
 
-            employee_accounts = frappe.get_all('Account', filters={'parent_account': ['like', f'%{parent} -']}, limit=0)            
-            new_account_number = int(parent_account_number) + len(employee_accounts) + 1
+            employee_accounts = frappe.get_all('Account', filters={'parent_account': ['like', f'%{parent}']}, limit=0)            
+            new_account_number = int(parent_account_number) + (len(employee_accounts) + 1)
 
             account = frappe.new_doc("Account")            
             account.account_type = "Cash"

@@ -65,7 +65,7 @@ def my_approvals_card_data():
 @frappe.whitelist()
 def my_requisitions_card_data():
     user_email = frappe.session.user
-    pr_names = ['0']
+    
 
     if user_email != "Administrator": # Check if user is linked to any employee profile
         employee_exists = frappe.db.sql("""
@@ -79,16 +79,19 @@ def my_requisitions_card_data():
 
         if not employee_exists:
             frappe.msgprint("You are not linked to any employee profile. Ask your administrator to help you with this.", indicator="warning", alert=True)
-            return {
-                "value": 0,
-                "fieldtype": "Int",
-                "route_options": {
-                    "name": ["in", pr_names]
-                },
-                "route": ["payment-requisition"]
-            }
+            # return {
+            #     "value": 0,
+            #     "fieldtype": "Int",
+            #     "route_options": {
+            #         "name": ["in", pr_names]
+            #     },
+            #     "route": ["payment-requisition"]
+            # }
     
-    pr_names = frappe.db.sql(f"""
+    pr_names = ['0']
+    count = 0
+    
+    rows = frappe.db.sql(f"""
         SELECT pr.name
         FROM `tabPayment Requisition` as pr
         LEFT JOIN `tabEmployee` AS emp  
@@ -96,7 +99,9 @@ def my_requisitions_card_data():
         WHERE pr.owner = '{user_email}'
         OR (emp.user_id = '{user_email}' OR emp.personal_email = '{user_email}' OR emp.company_email = '{user_email}')
     """)
-    count = len(pr_names)
+    if rows:
+        pr_names = rows
+        count = len(pr_names)
 
     return {
         "value": count,
