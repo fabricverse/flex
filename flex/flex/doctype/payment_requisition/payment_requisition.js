@@ -1,10 +1,72 @@
 // Copyright (c) 2024, Fabric and contributors
 // For license information, please see license.txt
+function toggle_display_sections(frm) {
+	// hide all other fields except for the ones applicable to the workflow state
+	all_sections = [
+		'section_transaction', 'section_currency', 'section_posting', 'section_request_items', 'section_request_totals', 
+		'section_attachments', 'section_remarks',
+		'section_expense_items', 'section_expense_totals', 'section_deposit',
+		'section_info', 'section_approvers', 'section_history'
+	];
+	not_set = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+	quotation_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+	submitted_to_accounts_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history'];
+	approvers = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
+	payment_due = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
+	capture_expenses = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers', 'section_expense_items', 'section_expense_totals', 'section_deposit', 'section_info'];
 
+	let display_sections = [];
+	let condition = false;
+	if (!frm.doc.workflow_state){ // before wf is set
+		display_sections = all_sections.filter(field => !not_set.includes(field));
+		console.log("no workflow set", frm.doc.workflow_state)
+	}
+	else if (frm.doc.workflow_state === 'Quotations Required'){
+		display_sections = all_sections.filter(field => !quotation_required_sections.includes(field));
+	}
+	else if (['Submitted to Accounts', 'Employee Revision Required'].includes(frm.doc.workflow_state)){ // 
+		display_sections = all_sections.filter(field => !submitted_to_accounts_sections.includes(field));
+	}
+	else if (['Awaiting Internal Approval', 'Awaiting Director Approval (1)', 'Awaiting Director Approval (2)', 'Payment Due'].includes(frm.doc.workflow_state)){ // 
+		display_sections = all_sections.filter(field => !approvers.includes(field));
+	}
+	else if (frm.doc.workflow_state === 'Payment Due'){
+		display_sections = all_sections.filter(field => !payment_due.includes(field));
+	}
+	else if (['Capture Expenses', 'Accounts Approval', 'Closed'].includes(frm.doc.workflow_state)){
+		display_sections = all_sections.filter(field => !capture_expenses.includes(field));
+	}
+	else {
+		// show all
+		display_sections = all_sections;
+		condition = true;
+	}
+
+	console.log("display_sections", display_sections, frm.doc.workflow_state);
+	
+	return {
+		fields: display_sections,
+		condition: condition
+	};
+}
 
 frappe.ui.form.on("Payment Requisition", {
 	btn_reset_deposit: function(frm) {
 		frm.set_value("deposit_amount", 0);
+		frm.refresh_field("deposit_amount");
+	},
+	skip_proof: function(frm){
+		frm.refresh_field("expense_items");
+	},
+	btn_deposit_remainder: function(frm) {
+		// Deposit the remainder of the requisition amount to the bank account
+		// Refresh the field to show the updated table
+		let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
+		if (deposit_amount <= 0) {
+			deposit_amount = 0;
+		}
+		frm.set_value("deposit_amount", deposit_amount);
+		frm.refresh_field("expense_items");
 		frm.refresh_field("deposit_amount");
 	},
 	after_workflow_action: function(frm) {
@@ -19,63 +81,86 @@ frappe.ui.form.on("Payment Requisition", {
 		}
 	},
 	refresh: function(frm) {
+		frm.get_field("btn_deposit_remainder").$input.addClass("btn-primary");
+		frm.get_field("btn_reset_deposit").$input.addClass("btn-danger");
+
+		if (["Payment Due", "Rejected", "Cancelled", "Accounts Approval", "Closed", "Expense Revision"].includes(frm.doc.workflow_state)) {
+			cur_frm.fields_dict['section_attachments'].collapse(1)
+		}
+
+		// get_sections_to_hide(frm)
+		let {fields, condition} = toggle_display_sections(frm);
+		frm.toggle_display(fields, condition);
+		// all_sections = [
+		// 	'section_transaction', 'section_currency', 'section_posting', 'section_request_items', 'section_request_totals', 
+		// 	'section_attachments', 'section_remarks',
+		// 	'section_expense_items', 'section_expense_totals', 'section_deposit',
+		// 	'section_info', 'section_approvers', 'section_history'
+		// ];
+		// quotation_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+
+		// display_sections = all_sections.filter(field => !quotation_required_sections.includes(field));
+		// console.log("display_sections", display_sections);
+
 		
-		deposit_button = frm.fields_dict["expense_items"].grid.add_custom_button(__('Deposit Remainder'),
-			function() {
-				// Deposit the remainder of the requisition amount to the bank account
-				// Refresh the field to show the updated table
-				let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
-				if (deposit_amount <= 0) {
-					deposit_amount = 0;
-				}
-				frm.set_value("deposit_amount", deposit_amount);
-				frm.refresh_field("expense_items");
-				frm.refresh_field("deposit_amount");
-			}
-		);
-		deposit_button.removeClass('btn-default').addClass('btn-primary');
+		// frm.toggle_display(display_sections, frm.doc.workflow_state !== 'Quotations Required');
+		
+		// deposit_button = frm.fields_dict["expense_items"].grid.add_custom_button(__('Deposit Remainder'),
+		// 	function() {
+		// 		// Deposit the remainder of the requisition amount to the bank account
+		// 		// Refresh the field to show the updated table
+		// 		let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
+		// 		if (deposit_amount <= 0) {
+		// 			deposit_amount = 0;
+		// 		}
+		// 		frm.set_value("deposit_amount", deposit_amount);
+		// 		frm.refresh_field("expense_items");
+		// 		frm.refresh_field("deposit_amount");
+		// 	}
+		// );
+		// deposit_button.removeClass('btn-default').addClass('btn-primary');
+		if (["Capture Expenses", "Accounts Approval", "Expense Revision"].includes(frm.doc.workflow_state)){
+			frm.fields_dict["expense_items"].grid.add_custom_button(__('Add Requisition Items'), 
+				function() {
+					// Copy items from (requested) request_items to expense_items
+					frm.doc.request_items.forEach(item => {
+						// Check if the item already exists in expense_items
+						const exists = frm.doc.expense_items.some(existing_expense => 
+							existing_expense.expense_item === item.expense_item &&
+							existing_expense.expense_account === item.expense_account // && existing_expense.amount === item.amount
+						);
+						// If it doesn't exist, add it
+						if (!exists) {
+							let new_row = frm.add_child("expense_items");
+							new_row.expense_item = item.expense_item;
+							new_row.description = item.description;
+							new_row.expense_account = item.expense_account;
+							new_row.amount = item.amount;
+							new_row.cost_center = item.cost_center;
+							new_row.project = item.project;
+							new_row.activity = item.activity;
+						}
+					});
+					update_expense_totals();
 
-		frm.fields_dict["expense_items"].grid.add_custom_button(__('Add Requisition Items'), 
-			function() {
-				// Copy items from (requested) request_items to expense_items
-				frm.doc.request_items.forEach(item => {
-					// Check if the item already exists in expense_items
-					const exists = frm.doc.expense_items.some(existing_expense => 
-						existing_expense.expense_item === item.expense_item &&
-						existing_expense.expense_account === item.expense_account // && existing_expense.amount === item.amount
-					);
-					// If it doesn't exist, add it
-					if (!exists) {
-						let new_row = frm.add_child("expense_items");
-						new_row.expense_item = item.expense_item;
-						new_row.description = item.description;
-						new_row.expense_account = item.expense_account;
-						new_row.amount = item.amount;
-						new_row.cost_center = item.cost_center;
-						new_row.project = item.project;
-						new_row.activity = item.activity;
+					let deposit_amount = 0;
+					if (frm.doc.deposit_amount > 0) {
+						deposit_amount = frm.doc.total - frm.doc.total_expenditure;
 					}
-				});
-				update_expense_totals();
 
-				let deposit_amount = 0;
-				if (frm.doc.deposit_amount > 0) {
-					deposit_amount = frm.doc.total - frm.doc.total_expenditure;
+					frm.set_value("deposit_amount", deposit_amount);
+					frm.refresh_field("deposit_amount");
+
+					// Refresh the field to show the updated table
+					frm.refresh_field("expense_items");
 				}
+			);
+			frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default');
 
-				frm.set_value("deposit_amount", deposit_amount);
-				frm.refresh_field("deposit_amount");
-
-				// Refresh the field to show the updated table
-				frm.refresh_field("expense_items");
-			}
-		);
-		frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default');
-
-	
-		frm.dashboard.show_progress(
-		    "Requisition Expenditure", ((frm.doc.total-frm.doc.total_expenditure)/frm.doc.total * 100)
-		);
+		}
+		// frm.dashboard.show_progress(
+		//     "Requisition Expenditure", ((frm.doc.total-frm.doc.total_expenditure)/frm.doc.total * 100)
+		// );
 		erpnext.hide_company(frm);
 		frm.events.show_general_ledger(frm);
 		

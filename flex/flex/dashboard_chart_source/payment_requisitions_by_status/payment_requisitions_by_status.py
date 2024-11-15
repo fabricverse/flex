@@ -19,10 +19,6 @@ def get(
 	labels, datapoints = [], []
 	filters = frappe.parse_json(filters)
 
-
-	# frappe.errprint(filters)
-	# frappe.errprint(timespan)
-
 	# filter the payment requisitions by status
 	pending_approval_statuses = ("Submitted to Accounts", "Awaiting Internal Approval", 
 							   "Awaiting Director Approval (1)", "Awaiting Director Approval (2)", 

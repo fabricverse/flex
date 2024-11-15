@@ -7,24 +7,25 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "status",
+  "section_payment",
+  "reference",
   "payment_type",
+  "status",
   "series",
   "column_break_mxib",
   "payment_date",
-  "reference",
-  "section_break_epqt",
+  "section_transaction",
   "date",
   "today",
   "column_break_hgtn",
   "party_type",
   "party",
   "address",
-  "currency_section",
+  "section_currency",
   "currency",
   "column_break_shea",
   "conversion_rate",
-  "posting_details_section",
+  "section_posting",
   "column_break_nlrc",
   "activity",
   "column_break_jezv",
@@ -33,49 +34,49 @@
   "cost_center",
   "column_break_zdvv",
   "mode_of_payment",
-  "section_break_gzgq",
+  "section_expense_items",
+  "expense_items",
+  "skip_proof",
+  "section_expense_totals",
+  "column_break_zwbj",
+  "column_break_ztdz",
+  "total_expenditure",
+  "deposit_amount",
+  "deposit_reference",
+  "section_deposit",
+  "column_break_ajop",
+  "column_break_ypdy",
+  "column_break_izhf",
+  "btn_deposit_remainder",
+  "column_break_shqu",
+  "btn_reset_deposit",
+  "section_request_items",
   "request_items",
-  "section_break_ujtl",
+  "section_request_totals",
   "total_qty",
   "column_break_gljc",
   "total",
-  "section_break_wdig",
+  "raised_by",
+  "section_attachments",
   "first_quotation",
   "allow_incomplete_quotations",
   "column_break_ajbv",
   "second_quotation",
   "column_break_lvqu",
   "third_quotation",
-  "section_break_keaa",
-  "expense_items",
-  "skip_proof",
-  "section_break_ojaw",
-  "column_break_zwbj",
-  "column_break_ztdz",
-  "total_expenditure",
-  "deposit_amount",
-  "section_break_wxjo",
-  "column_break_ajop",
-  "column_break_sevf",
-  "column_break_ypdy",
-  "deposit_reference",
-  "column_break_yvli",
-  "btn_reset_deposit",
-  "section_break_vdvf",
-  "raised_by",
-  "column_break_uygv",
+  "section_remarks",
   "remarks",
-  "section_break_vsjs",
+  "section_approvers",
   "submitted_by",
   "initial_approver",
   "column_break_zbsw",
   "checked_by",
   "final_approver",
-  "approvals_section",
+  "section_history",
   "workflow_state",
   "approval_comment",
   "approval_history",
-  "section_break_tets",
+  "section_info",
   "column_break_fktt",
   "company",
   "amended_from",
@@ -84,10 +85,6 @@
   "expense_journal_entry"
  ],
  "fields": [
-  {
-   "fieldname": "section_break_epqt",
-   "fieldtype": "Section Break"
-  },
   {
    "bold": 1,
    "depends_on": "eval: in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.party_type",
@@ -101,7 +98,7 @@
    "reqd": 1
   },
   {
-   "depends_on": "party_type",
+   "depends_on": "eval: doc.party_type && doc.party_type !== \"Employee\" && doc.party_type !== \"Shareholder\";",
    "fieldname": "address",
    "fieldtype": "Small Text",
    "label": "Address",
@@ -121,35 +118,15 @@
   {
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
    "label": "Mode of Payment",
    "options": "Mode of Payment",
    "reqd": 1
-  },
-  {
-   "fieldname": "section_break_gzgq",
-   "fieldtype": "Section Break",
-   "hide_border": 1,
-   "label": "Request Details"
   },
   {
    "default": "1",
    "fieldname": "today",
    "fieldtype": "Check",
    "label": "Today"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "approvals_section",
-   "fieldtype": "Section Break",
-   "label": "Approval History"
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval: doc.ammended_from || doc.payment_journal_entry || (!doc.company || !doc.prepared_by)",
-   "fieldname": "section_break_tets",
-   "fieldtype": "Section Break",
-   "label": "More Information"
   },
   {
    "fieldname": "column_break_fktt",
@@ -169,11 +146,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "posting_details_section",
-   "fieldtype": "Section Break",
-   "label": "Posting Details"
-  },
-  {
    "fieldname": "column_break_nlrc",
    "fieldtype": "Column Break"
   },
@@ -181,7 +153,6 @@
    "depends_on": "eval: !doc.party && (in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.docstatus==0) && doc.series",
    "fieldname": "party_type",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Payee Type",
    "options": "DocType",
    "print_hide": 1,
@@ -192,7 +163,6 @@
   {
    "fieldname": "activity",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Activity",
    "options": "Task"
@@ -200,8 +170,6 @@
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Cost Center",
    "options": "Cost Center",
    "reqd": 1
@@ -235,10 +203,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_break_ujtl",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "column_break_gljc",
    "fieldtype": "Column Break"
   },
@@ -246,6 +210,7 @@
    "bold": 1,
    "fieldname": "total",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Total Requested",
    "no_copy": 1,
    "options": "currency",
@@ -256,7 +221,6 @@
    "fetch_from": "activity.project",
    "fieldname": "project_name",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Project",
    "options": "Project",
@@ -281,12 +245,6 @@
   {
    "fieldname": "column_break_zdvv",
    "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "currency_section",
-   "fieldtype": "Section Break",
-   "label": "Currency"
   },
   {
    "default": "Company:company:default_currency",
@@ -362,11 +320,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_vsjs",
-   "fieldtype": "Section Break",
-   "label": "Approvers"
-  },
-  {
    "fieldname": "initial_approver",
    "fieldtype": "Read Only",
    "label": "Initial Approver",
@@ -397,14 +350,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_break_vdvf",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_uygv",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "submitted_by",
    "fieldtype": "Read Only",
    "in_list_view": 1,
@@ -415,15 +360,8 @@
    "fieldname": "raised_by",
    "fieldtype": "Read Only",
    "in_list_view": 1,
-   "label": "Raised By",
+   "label": "Requested By",
    "no_copy": 1
-  },
-  {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval: !doc.__islocal || (doc.first_quotation && doc.second_quotation && doc.third_quotation)",
-   "fieldname": "section_break_wdig",
-   "fieldtype": "Section Break",
-   "label": "Attach Quotations"
   },
   {
    "fieldname": "first_quotation",
@@ -475,6 +413,7 @@
   },
   {
    "allow_on_submit": 1,
+   "depends_on": "false",
    "fieldname": "status",
    "fieldtype": "Link",
    "hidden": 1,
@@ -491,15 +430,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_keaa",
-   "fieldtype": "Section Break",
-   "hide_border": 1
-  },
-  {
-   "fieldname": "section_break_ojaw",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "column_break_zwbj",
    "fieldtype": "Column Break"
   },
@@ -512,13 +442,11 @@
    "bold": 1,
    "fieldname": "deposit_amount",
    "fieldtype": "Currency",
-   "label": "Deposit Amount",
+   "label": "Deposited Amount",
    "options": "currency",
    "read_only": 1
   },
   {
-   "allow_bulk_edit": 1,
-   "allow_on_submit": 1,
    "fieldname": "expense_items",
    "fieldtype": "Table",
    "label": "Expenditure",
@@ -549,21 +477,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.deposit_amount > 0",
-   "fieldname": "section_break_wxjo",
-   "fieldtype": "Section Break",
-   "hide_border": 1
-  },
-  {
    "fieldname": "column_break_ajop",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_sevf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_yvli",
    "fieldtype": "Column Break"
   },
   {
@@ -571,6 +485,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.deposit_amount > 0",
    "fieldname": "deposit_reference",
    "fieldtype": "Data",
    "label": "Deposit Reference",
@@ -580,12 +495,98 @@
    "fieldname": "btn_reset_deposit",
    "fieldtype": "Button",
    "label": "Reset Deposit"
+  },
+  {
+   "fieldname": "section_payment",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_transaction",
+   "fieldtype": "Section Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_currency",
+   "fieldtype": "Section Break",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "section_posting",
+   "fieldtype": "Section Break",
+   "label": "Posting Details"
+  },
+  {
+   "fieldname": "section_request_items",
+   "fieldtype": "Section Break",
+   "hide_border": 1,
+   "label": "Request Details"
+  },
+  {
+   "fieldname": "section_request_totals",
+   "fieldtype": "Section Break"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: !doc.__islocal || (doc.first_quotation && doc.second_quotation && doc.third_quotation)",
+   "fieldname": "section_attachments",
+   "fieldtype": "Section Break",
+   "label": "Attach Quotations"
+  },
+  {
+   "fieldname": "section_expense_items",
+   "fieldtype": "Section Break",
+   "hide_border": 1,
+   "label": "Expenses"
+  },
+  {
+   "fieldname": "section_expense_totals",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "([\"Capture Expenses\", \"Accounts Approval\", \"Expense Revision\"].includes(frm.doc.workflow_state))",
+   "fieldname": "section_deposit",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_remarks",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_approvers",
+   "fieldtype": "Section Break",
+   "label": "Approvers"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_history",
+   "fieldtype": "Section Break",
+   "label": "Approval History"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval: doc.ammended_from || doc.payment_journal_entry || (!doc.company || !doc.prepared_by)",
+   "fieldname": "section_info",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "column_break_izhf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "btn_deposit_remainder",
+   "fieldtype": "Button",
+   "label": "Deposit Remainder"
+  },
+  {
+   "fieldname": "column_break_shqu",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-25 16:31:41.101920",
+ "modified": "2024-11-15 18:35:26.204478",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
