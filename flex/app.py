@@ -63,8 +63,8 @@ def my_approvals_card_data():
     }
 
 def add_doc_attachments(doc, method):
-    if not doc.doctype == "Email Queue": return
-    
+    if not doc.reference_doctype == "Payment Requisition": return
+
     files = frappe.db.get_all('File',{'attached_to_name': doc.reference_name}) #list of attachments linked to ref. doc
 
     if len(files) > 0:
@@ -76,8 +76,8 @@ def add_doc_attachments(doc, method):
         if len(doc.attachments) == 2:   #if original att is empty => "[]"
             doc.attachments = f'[{out}]'
         else: 
-            #else add to
-            doc.attachments = doc.attachments.replace('}]','}, '+ out + ']' )   #tady to přidávám ke zbytku
+            #else add attachments
+            doc.attachments = doc.attachments.replace('}]','}, '+ out + ']' )
         doc.save()
 
 @frappe.whitelist()
