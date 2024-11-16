@@ -65,6 +65,9 @@ def my_approvals_card_data():
 def add_doc_attachments(doc, method):
     if not doc.reference_doctype == "Payment Requisition": return
 
+    status = frappe.get_value("Payment Requisition", doc.reference_doctype, "workflow_state")
+    if status == "Capture Expenses": return
+
     files = frappe.db.get_all('File',{'attached_to_name': doc.reference_name}) #list of attachments linked to ref. doc
 
     if len(files) > 0:

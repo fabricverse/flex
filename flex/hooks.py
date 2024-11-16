@@ -145,6 +145,13 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
+scheduler_events = {
+    "cron": {
+        "* * * * *": [
+            "frappe.email.queue.flush"
+        ]
+    }
+}
 
 # scheduler_events = {
 # 	"all": [
