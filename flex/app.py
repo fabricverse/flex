@@ -62,6 +62,24 @@ def my_approvals_card_data():
         "route": ["payment-requisition"]
     }
 
+def add_doc_attachments(doc, method):
+    if not doc.doctype == "Email Queue": return
+    
+    files = frappe.db.get_all('File',{'attached_to_name': doc.reference_name}) #list of attachments linked to ref. doc
+
+    if len(files) > 0:
+        s = []
+        for file in files:
+            s.append('{"fid": "'+ file.name +'"}')  #append to temp field in format: {"fid": "xxxxx"}
+    
+        out = frappe.utils.comma_sep(s,'{0}, {1}', add_quotes=False)    #implode to "one" row separed by comma
+        if len(doc.attachments) == 2:   #if original att is empty => "[]"
+            doc.attachments = f'[{out}]'
+        else: 
+            #else add to
+            doc.attachments = doc.attachments.replace('}]','}, '+ out + ']' )   #tady to přidávám ke zbytku
+        doc.save()
+
 @frappe.whitelist()
 def my_requisitions_card_data():
     user_email = frappe.session.user
