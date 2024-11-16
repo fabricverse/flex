@@ -207,8 +207,8 @@ frappe.ui.form.on("Payment Requisition", {
     },
 	currency: function(frm) {		
 		let company_currency = get_company_currency(frm.doc.company);
-		frm.toggle_display("conversion_rate", frm.doc.currency !== company_currency);
 		check_currency(frm, company_currency);
+		frm.toggle_display("conversion_rate", frm.doc.currency !== company_currency);
 	},
     validate: function(frm) {
         set_expense_items(frm);		
@@ -448,10 +448,10 @@ function change_grid_labels(frm) {
 }
 
 function check_currency(frm, company_currency){
+	frm.set_value("conversion_rate", 1);
 
 	if (frm.doc.currency === company_currency || !frm.doc.currency) {
 		frm.set_value("currency", company_currency);
-		frm.set_value("conversion_rate", 1);
 		cur_frm.set_df_property("conversion_rate", "description", "Default company currency selected");		
 	}
 	else {

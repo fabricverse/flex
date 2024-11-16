@@ -135,6 +135,9 @@ doc_events = {
 	"Expense Entry": {
 		"on_update": "flex.app.setup"
 	},
+	"Email Queue": {
+		"after_insert": "flex.app.add_doc_attachments"
+	},
 	"Expense Request": {
 		"validate": "flex.approve_expense.approve"
 	}
