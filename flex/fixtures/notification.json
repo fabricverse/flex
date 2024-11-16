@@ -110,5 +110,46 @@
   "slack_webhook_url": null,
   "subject": "Action Required on Requisition - {{ doc.name }}",
   "value_changed": "workflow_state"
+ },
+ {
+  "attach_print": 1,
+  "channel": "Email",
+  "condition": "",
+  "date_changed": null,
+  "days_in_advance": 0,
+  "docstatus": 0,
+  "doctype": "Notification",
+  "document_type": "Payment Requisition",
+  "enabled": 1,
+  "event": "Value Change",
+  "is_standard": 0,
+  "message": "Hello {{doc.raised_by}}\n</br>\n<p>The requisition {{doc.name}} has been paid.<p>\n\n<p>The payment document is attached.</p> \n\n{% if party_type == \"Employee\" %}\n<p>If you You can also click the button below to capture expenses against this request</p>\n\n</br>\n\n<p><a style=\"btn-lg btn btn-primary primary-action\" href=\"{{doc.get_url()}}\"> {{doc.doctype}} </a></p>\n\n{% endif %}\n\n<br>\n<p>Regards,<br>\nFinance Team\n</p>\n\n<p>\n    <strong>Malaria Partners Zambia</strong>\n</p>\n",
+  "message_type": "Markdown",
+  "method": null,
+  "modified": "2024-11-15 19:39:53.199058",
+  "module": "Flex",
+  "name": "Payment Requisition Payment",
+  "print_format": "Payment Requisition Print",
+  "property_value": null,
+  "recipients": [
+   {
+    "bcc": null,
+    "cc": null,
+    "condition": "doc.workflow_state in [\"Capture Expenses\"]",
+    "parent": "Payment Requisition Payment",
+    "parentfield": "recipients",
+    "parenttype": "Notification",
+    "receiver_by_document_field": "owner",
+    "receiver_by_role": null
+   }
+  ],
+  "send_system_notification": 1,
+  "send_to_all_assignees": 0,
+  "sender": "Malaria Partners Zambia",
+  "sender_email": "erpnextafrica@gmail.com",
+  "set_property_after_alert": null,
+  "slack_webhook_url": null,
+  "subject": "Payment Processed for Requisition: {{ doc.name }}",
+  "value_changed": "workflow_state"
  }
 ]

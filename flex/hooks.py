@@ -225,6 +225,7 @@ doc_events = {
 
 # Fixtures
 # --------
+# move perms to mpz app
 
 fixtures = [        
     {
@@ -318,7 +319,11 @@ fixtures = [
     {
         "doctype": "Notification",
         "filters": {
-            "name": ["in", ["Requisition Workflow Action Required", "Payment Requisition Approval"]]
+            "name": ["in", [
+                "Requisition Workflow Action Required", 
+                "Payment Requisition Approval",
+                "Payment Requisition Payment"
+            ]]
         }
     }
 ]
