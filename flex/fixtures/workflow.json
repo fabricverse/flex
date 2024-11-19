@@ -90,13 +90,58 @@
   "doctype": "Workflow",
   "document_type": "Payment Requisition",
   "is_active": 1,
-  "modified": "2024-11-15 21:48:53.321954",
+  "modified": "2024-11-19 09:24:44.927655",
   "name": "Payment Requisition",
   "override_status": 0,
   "send_email_alert": 0,
   "states": [
    {
     "allow_edit": "Employee Self Service",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 1,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Quotations Required",
+    "update_field": "workflow_state",
+    "update_value": "Quotations Required",
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "Accounts User",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 1,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Quotations Required",
+    "update_field": "workflow_state",
+    "update_value": "Quotations Required",
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "Accounts Manager",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 1,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Quotations Required",
+    "update_field": "workflow_state",
+    "update_value": "Quotations Required",
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "Executive Director",
     "avoid_status_override": 0,
     "doc_status": "0",
     "is_optional_state": 1,
@@ -231,7 +276,37 @@
     "workflow_builder_id": null
    },
    {
+    "allow_edit": "Accounts Manager",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 1,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Payment Due",
+    "update_field": "workflow_state",
+    "update_value": "Payment Due",
+    "workflow_builder_id": null
+   },
+   {
     "allow_edit": "Employee Self Service",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Capture Expenses",
+    "update_field": "workflow_state",
+    "update_value": "Capture Expenses",
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "Accounts User",
     "avoid_status_override": 0,
     "doc_status": "0",
     "is_optional_state": 0,
@@ -262,6 +337,21 @@
    },
    {
     "allow_edit": "Accounts User",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 0,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Accounts Approval",
+    "update_field": "workflow_state",
+    "update_value": "Accounts Approval",
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "Accounts Manager",
     "avoid_status_override": 0,
     "doc_status": "0",
     "is_optional_state": 0,
@@ -455,7 +545,7 @@
     "workflow_builder_id": "action-3"
    },
    {
-    "action": "Request Revision",
+    "action": "Query",
     "allow_self_approval": 1,
     "allowed": "Executive Director",
     "condition": null,
@@ -491,7 +581,7 @@
     "workflow_builder_id": "action-7"
    },
    {
-    "action": "Request Revision",
+    "action": "Query",
     "allow_self_approval": 1,
     "allowed": "Director Approver Level 1",
     "condition": null,
@@ -527,7 +617,7 @@
     "workflow_builder_id": null
    },
    {
-    "action": "Request Revision",
+    "action": "Query",
     "allow_self_approval": 1,
     "allowed": "Director Approver Level 2",
     "condition": null,

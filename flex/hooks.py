@@ -319,7 +319,24 @@ fixtures = [
                 "Closed",
             ]]
         }
-    },   
+    },
+    {
+        "doctype": "Workflow Action Master",
+        "filters": {
+            "workflow_action_name": ["in", [
+                "Accept Entries",
+                "Request Expense Revision",
+                "Request Executive Approval",
+                "Request Employee Revision",
+                "Request Requester Revision",
+                "Query",
+                "Cancel",
+                "Revise",
+                "Request Approval",
+                "Save"
+            ]]
+        }
+    },
     {
         "doctype": "Workflow",
         "filters": {
