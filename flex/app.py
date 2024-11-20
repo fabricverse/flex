@@ -25,14 +25,14 @@ def my_approvals_card_data():
 
     my_approval_workflows = []
     if "Executive Director" in user_roles:
-        my_approval_workflows.append("Awaiting Internal Approval")
-    if "Director Approver Level 1" in user_roles:
-        my_approval_workflows.append("Awaiting Director Approval (1)")
-    if "Director Approver Level 2" in user_roles:
-        my_approval_workflows.append("Awaiting Director Approval (2)")
+        my_approval_workflows.append("Pending Internal Check")
+    if "First Approver" in user_roles:
+        my_approval_workflows.append("Pending First Approval")
+    if "Final Approver" in user_roles:
+        my_approval_workflows.append("Pending Final Approval")
     if "Accounts User" in user_roles or "Accounts Manager" in user_roles:
         my_approval_workflows.append("Submitted to Accounts")
-        my_approval_workflows.append("Accounts Approval")
+        my_approval_workflows.append("Accounts Verification")
 
 
     workflow_list = [state for state in workflow_list if state in my_approval_workflows]

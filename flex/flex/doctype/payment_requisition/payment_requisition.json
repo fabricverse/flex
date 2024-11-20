@@ -23,6 +23,7 @@
   "address",
   "section_currency",
   "currency",
+  "company_currency",
   "column_break_shea",
   "conversion_rate",
   "section_posting",
@@ -41,6 +42,7 @@
   "column_break_zwbj",
   "column_break_ztdz",
   "total_expenditure",
+  "total_expenditure_based",
   "deposit_amount",
   "deposit_reference",
   "section_deposit",
@@ -56,6 +58,7 @@
   "total_qty",
   "column_break_gljc",
   "total",
+  "total_base",
   "raised_by",
   "section_attachments",
   "first_quotation",
@@ -582,12 +585,42 @@
   {
    "fieldname": "column_break_shqu",
    "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "depends_on": "eval: doc.company_currency !== doc.currency",
+   "fieldname": "total_base",
+   "fieldtype": "Currency",
+   "label": "Total (Company Currency)",
+   "no_copy": 1,
+   "options": "Company:company:default_currency",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval: doc.company_currency !== doc.currency",
+   "fieldname": "total_expenditure_based",
+   "fieldtype": "Currency",
+   "label": "Total (Company Currency)",
+   "no_copy": 1,
+   "options": "Company:company:default_currency",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "company.default_currency",
+   "fieldname": "company_currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Company Currency",
+   "options": "Currency"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-16 04:31:37.395534",
+ "modified": "2024-11-20 17:56:24.190348",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
@@ -636,7 +669,7 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Director Approver Level 1",
+   "role": "First Approver",
    "share": 1,
    "write": 1
   },
@@ -647,7 +680,7 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Director Approver Level 2",
+   "role": "Final Approver",
    "share": 1,
    "write": 1
   },

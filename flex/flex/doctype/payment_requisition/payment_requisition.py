@@ -24,7 +24,7 @@ class PaymentRequisition(Document):
 
         self.calculate_totals()
 
-        if self.workflow_state == "Accounts Approval":
+        if self.workflow_state == "Accounts Verification":
             self.validate_totals()
         
         if self.workflow_state == "Capture Expenses" and not self.payable_journal_entry:
@@ -104,7 +104,7 @@ class PaymentRequisition(Document):
         
         """
         is_accounts_user = self.user_has_role(user, "Accounts User")
-        # go straight to attach docs workflow state, otherwise go to awaiting internal approval
+        # go straight to attach docs workflow state, otherwise go to Pending Internal Check
 
 
     def user_has_role(self, user, roles):
@@ -155,14 +155,14 @@ class PaymentRequisition(Document):
                 self.submitted_by = user.full_name
                 
 
-        if self.workflow_state in ["Ready for Submission", "Awaiting Internal Approval",]:
+        if self.workflow_state in ["Ready for Submission", "Pending Internal Check",]:
             if not self.submitted_by or self.submitted_by != user.full_name:
                 self.submitted_by = user.full_name
 
-        if self.workflow_state == "Awaiting Director Approval (1)":
+        if self.workflow_state == "Pending First Approval":
             self.checked_by = user.full_name
 
-        if self.workflow_state == "Awaiting Director Approval (2)":
+        if self.workflow_state == "Pending Final Approval":
             self.initial_approver = user.full_name
             
         if self.workflow_state == "Payment Due":
@@ -176,6 +176,7 @@ class PaymentRequisition(Document):
         # add default project and cost center to expense items
 
         total = 0
+        total_base = 0
         count = 0
         expense_items = []
 
@@ -199,6 +200,8 @@ class PaymentRequisition(Document):
 
         if self.total != total:
             self.total = total
+        if self.total_base != (total * self.conversion_rate):
+            self.total_base = flt(total * self.conversion_rate)
         if self.total_qty != count:
             self.total_qty = count
 
@@ -210,6 +213,8 @@ class PaymentRequisition(Document):
 
         if self.total_expenditure != total_expenditure:
             self.total_expenditure = total_expenditure
+        if self.total_expenditure_based != (total_expenditure * self.conversion_rate):
+            self.total_expenditure_based = flt(total_expenditure * self.conversion_rate)
 
         # Update deposit amount if it exceeds available balance
         if flt(self.total) != flt(self.total_expenditure) + flt(self.deposit_amount):

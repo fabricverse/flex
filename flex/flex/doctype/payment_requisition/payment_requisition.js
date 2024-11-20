@@ -27,13 +27,16 @@ function toggle_display_sections(frm) {
 	else if (['Submitted to Accounts', 'Employee Revision Required'].includes(frm.doc.workflow_state)){ // 
 		display_sections = all_sections.filter(field => !submitted_to_accounts_sections.includes(field));
 	}
-	else if (['Awaiting Internal Approval', 'Awaiting Director Approval (1)', 'Awaiting Director Approval (2)', 'Payment Due'].includes(frm.doc.workflow_state)){ // 
+	else if (['Pending Internal Check', 'Pending First Approval', 'Pending Final Approval'].includes(frm.doc.workflow_state)){ // 
 		display_sections = all_sections.filter(field => !approvers.includes(field));
 	}
-	else if (frm.doc.workflow_state === 'Payment Due'){
+	else if (['Payment Due'].includes(frm.doc.workflow_state)){
 		display_sections = all_sections.filter(field => !payment_due.includes(field));
 	}
-	// else if (['Capture Expenses', 'Accounts Approval', 'Closed'].includes(frm.doc.workflow_state)){
+	else if (['Capture Expenses', 'Expense Revision'].includes(frm.doc.workflow_state)){
+		display_sections = all_sections.filter(field => !capture_expenses.includes(field));
+	}
+	// else if (['Capture Expenses', 'Accounts Verification', 'Closed'].includes(frm.doc.workflow_state)){
 	// 	display_sections = all_sections.filter(field => !capture_expenses.includes(field));
 	// }
 	else {
@@ -71,7 +74,7 @@ frappe.ui.form.on("Payment Requisition", {
 	},
 	after_workflow_action: function(frm) {
 		// TODO: move to py
-		// if (["Submitted to Accounts", "Awaiting Internal Approval", "Awaiting Director Approval (1)", "Awaiting Director Approval (2)"].includes(frm.doc.workflow_state)) {
+		// if (["Submitted to Accounts", "Pending Internal Check", "Pending First Approval", "Pending Final Approval"].includes(frm.doc.workflow_state)) {
 		// 	frm.set_value("skip_proof", 0);
 		// 	frm.set_value("allow_incomplete_quotations", 0);
 		// 	frm.refresh_field("skip_proof");
@@ -90,9 +93,11 @@ frappe.ui.form.on("Payment Requisition", {
 		frm.get_field("btn_deposit_remainder").$input.addClass("btn-primary");
 		frm.get_field("btn_reset_deposit").$input.addClass("btn-danger");
 
-		if (["Payment Due", "Rejected", "Cancelled", "Accounts Approval", "Closed", "Expense Revision"].includes(frm.doc.workflow_state)) {
+		if (["Payment Due", "Rejected", "Cancelled", "Accounts Verification", "Closed", "Expense Revision"].includes(frm.doc.workflow_state)) {
 			cur_frm.fields_dict['section_attachments'].collapse(1)
 		}
+
+		
 
 		// get_sections_to_hide(frm)
 		// all_sections = [
@@ -123,7 +128,7 @@ frappe.ui.form.on("Payment Requisition", {
 		// 	}
 		// );
 		// deposit_button.removeClass('btn-default').addClass('btn-primary');
-		if (["Capture Expenses", "Accounts Approval", "Expense Revision"].includes(frm.doc.workflow_state)){
+		if (["Capture Expenses", "Accounts Verification", "Expense Revision"].includes(frm.doc.workflow_state)){
 			frm.fields_dict["expense_items"].grid.add_custom_button(__('Add Requisition Items'), 
 				function() {
 					// Copy items from (requested) request_items to expense_items
@@ -225,6 +230,13 @@ frappe.ui.form.on("Payment Requisition", {
 		frm.refresh_fields();
 	},
     setup: function(frm) {
+		frm.set_query("series", () => {
+			return {
+				filters: {
+					"disabled": 0
+				}
+			}
+		});
 		frm.set_query("party_type", function () {
 			frm.events.validate_company(frm);
 			return {
@@ -378,26 +390,37 @@ frappe.ui.form.on('Requisition Expense Item', {
 
 function update_expense_totals(){
     var total_expenditure = 0;
+	var total_expenditure_based = 0;
     cur_frm.doc.expense_items.forEach(
         function(item) { 
             total_expenditure += item.amount;
-        });
-    cur_frm.set_value("total_expenditure", total_expenditure);
+	});
+
+	total_expenditure_based = (total_expenditure * cur_frm.doc.conversion_rate)
+	cur_frm.set_value("total_expenditure", total_expenditure);
+	cur_frm.set_value("total_expenditure_based", total_expenditure_based);
     refresh_field("total_expenditure");
+    refresh_field("total_expenditure_based");
 }
 
 function update_requisition_totals(frm, cdt, cdn){
     var total = 0;
     var total_qty = 0;
+    var total_base = 0;
     frm.doc.request_items.forEach(
         function(item) { 
             total += item.amount;
             total_qty +=1;
-        });
+	});
+	total_base = (total * frm.doc.conversion_rate)
     frm.set_value("total", total);
     refresh_field("total");
+
     frm.set_value("total_qty", total_qty);
     refresh_field("total_qty");
+
+    frm.set_value("total_base", total_base);
+    refresh_field("total_base");
 }
 
 function set_queries(frm) {
@@ -456,7 +479,9 @@ function check_currency(frm, company_currency){
 	}
 	else {
 		get_exchange_rate(frm, frm.doc.date, frm.doc.currency, company_currency, function(exchange_rate) {
-			frm.set_value("conversion_rate", exchange_rate);
+			if(exchange_rate !== 0){
+				frm.set_value("conversion_rate", exchange_rate);
+			}
 
 			//exchange rate field label
 			cur_frm.set_df_property("conversion_rate", "description", 
@@ -554,6 +579,100 @@ function validate_quotations(frm) {
 	}
 }
 
+function add_comment(frm, title='Add a Comment'){
+    return new Promise((resolve, reject) => {
+		const dialog = new frappe.ui.Dialog({
+			title: __(title),
+			fields: [],
+		});
+		
+		// Create a container for the comment box
+		const commentBoxWrapper = $('<div class="comment-box" style="margin-top:25px;"></div>').appendTo(dialog.body);
+		
+		// Initialize the comment box
+		const commentBox = frappe.ui.form.make_control({
+			parent: commentBoxWrapper[0], // Ensure the DOM element is passed
+			render_input: true,
+			only_input: true,
+			enable_mentions: true,
+			df: {
+				fieldtype: "Comment",
+				fieldname: "comment",
+			},
+			on_submit: (comment) => {
+				if (strip_html(comment).trim() !== "" || comment.includes("img")) {
+					commentBox.disable();
+					frappe
+						.xcall("frappe.desk.form.utils.add_comment", {
+							reference_doctype: frm.doc.doctype,
+							reference_name: frm.doc.name,
+							content: comment,
+							comment_email: frappe.session.user,
+							comment_by: frappe.session.user_fullname,
+						})
+						.then((new_comment) => {
+							cur_frm.reload_doc();
+							
+							// Close the dialog
+							dialog.hide();
+							resolve(true); // Comment successfully added
+						})
+						.catch((error) => {
+                            frappe.msgprint(__('Failed to add comment.'));
+                            reject(new Error(error));
+                        })
+						.finally(() => {
+							commentBox.enable();
+						});
+				} else {
+					frappe.msgprint(__('Please enter a valid comment.'));
+					reject(new Error('Invalid comment'));
+				}
+			},
+		});
+		
+		// Render and display the comment box
+		commentBox.refresh();
+		
+		// Customizations after rendering
+		setTimeout(() => {
+			const modal = dialog.$wrapper.find('.modal-content');
+			if (modal.length && window.innerWidth >= 768) {
+				modal.css({
+					width: '800px',
+					left: '50%',
+					transform: 'translateX(-50%)'
+				});
+			}
+			const box = dialog.$wrapper.find('.comment-box');
+			if (box.length && window.innerWidth >= 768) {
+				box.css({
+					'margin': '20px',
+					'margin-top': '25px'
+				});
+			}
+			
+			// Remove the .comment-input-header
+			const header = commentBoxWrapper.find('.comment-input-header');
+			if (header.length) {
+				header.remove();
+			}
+		
+			// Adjust the input box height to display 3 lines
+			const editor = commentBoxWrapper.find('.ql-editor');
+			if (editor.length) {
+				editor.css({
+					height: '5em', // Adjust height for ~3 lines
+					overflowY: 'auto',
+				});
+			}
+		}, 100);
+		
+		// Show the dialog
+		dialog.show();	
+	});
+}
+
 function verify_workflow_action(frm) {
     const action = frm.selected_workflow_action;
 
@@ -571,45 +690,19 @@ function verify_workflow_action(frm) {
                 }
             );
         } else if (['Reject', 'Cancel', 'Request Revision', 'Request Employee Revision', 'Request Expense Revision'].includes(action)) {
-            console.log(3, "Reject/Cancel/Request Revision", action);
-            
-            frappe.prompt(
-                {
-                    fieldtype: 'Small Text',
-                    fieldname: 'approval_comment',
-                    label: __('Please provide a reason for this action'),
-                    reqd: 1,
-                    height: '10em'
-                }, 
-                data => {
-                    if (data.approval_comment) {
-                        frappe.call({
-                            method: "frappe.client.set_value",
-                            args: {
-                                doctype: frm.doc.doctype,
-                                name: frm.doc.name,
-                                fieldname: 'approval_comment',
-                                value: data.approval_comment
-                            },
-                            callback: function(response) {
-                                if (response.message) {
-                                    resolve();
-                                } else {
-                                    reject(new Error('Failed to set approval comment'));
-                                }
-                            }
-                        });
-						// frm.set_value('approval_comment', data.approval_comment)
-						// frm.set_value('workflow_state', )
-						frm.refresh_field('approval_comment')
-                    } else {
-                        frappe.validated = false;
-                        reject(new Error("No comment provided"));
-                    }
-                }, 
-                __('This action requires a comment'), 
-                __('Submit')
-            );
+			// Call the add_comment function and wait for the promise to resolve or reject
+            const commentPromise = add_comment(frm, 'A comment is required');
+
+            // Handle the promise resolution
+            commentPromise
+                .then(() => {
+                    // If the comment is added successfully, resolve the outer promise
+                    resolve();
+                })
+                .catch((error) => {
+                    // If there's an error adding the comment, reject the outer promise
+                    reject(new Error('Failed to set approval comment'));
+                });
         } else {
             // For actions that don't require confirmation
             resolve();
