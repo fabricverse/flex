@@ -6,7 +6,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "series"
+  "series",
+  "disabled"
  ],
  "fields": [
   {
@@ -20,11 +21,17 @@
    "length": 5,
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-19 14:01:09.404217",
+ "modified": "2024-11-20 17:35:44.580290",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Document Series",
