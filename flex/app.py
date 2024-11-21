@@ -8,6 +8,18 @@ def requisition_action(name, action):
     doc.requisition_action(action)
 
 @frappe.whitelist()
+def save_comment(reference_doctype, reference_name, content, comment_email, comment_by):
+    doc = frappe.get_doc(reference_doctype, reference_name)
+    doc.add_comment('Comment', text=content)
+    doc.query = content
+    doc.queried_by = comment_by
+    doc.save()
+    doc.reload()
+
+    print('queried_by', frappe.get_value(reference_doctype, reference_name, "queried_by"))
+
+
+@frappe.whitelist()
 def my_approvals_card_data():
     user = frappe.session.user
     workflow = frappe.get_doc("Workflow", "Payment Requisition")

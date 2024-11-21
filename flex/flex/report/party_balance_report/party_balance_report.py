@@ -120,7 +120,8 @@ def get_columns(filters):
     currency = frappe.get_cached_value('Company', company, 'default_currency') if company else frappe.defaults.get_global_default('currency')
     
     group_by_field = filters.get('group_by')
-    columns = [
+    if not group_by_field:
+        return [
             {"label": _("Date"), "fieldname": "date", "fieldtype": "Date", "width": 120},
             {"label": _("Party Type"), "fieldname": "party_type", "fieldtype": "Link", "options": "DocType", "width": 100},
             {"label": _("Party"), "fieldname": "party", "fieldtype": "Dynamic Link", "options": "party_type", "width": 180},
@@ -133,9 +134,9 @@ def get_columns(filters):
             {"label": _("Project"), "fieldname": "project", "fieldtype": "Link", "options": "Project", "width": 200},
             {"label": _("Activity"), "fieldname": "activity", "fieldtype": "Data", "width": 200}
         ]
-    return columns
     
     if group_by_field:
+        print('group_by_field', group_by_field)
         if group_by_field == "Party Type":
             columns = [
                 {"label": _("Party Type"), "fieldname": "party_type", "fieldtype": "Link", "options": "DocType", "width": 200},

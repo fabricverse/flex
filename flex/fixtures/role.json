@@ -59,9 +59,9 @@
   "home_page": null,
   "is_custom": 0,
   "modified": "2024-08-13 13:39:21.710817",
-  "name": "Director Approver Level 2",
+  "name": "Final Approver",
   "restrict_to_domain": null,
-  "role_name": "Director Approver Level 2",
+  "role_name": "Final Approver",
   "two_factor_auth": 0
  },
  {
@@ -72,9 +72,9 @@
   "home_page": null,
   "is_custom": 0,
   "modified": "2024-08-13 13:39:30.552404",
-  "name": "Director Approver Level 1",
+  "name": "First Approver",
   "restrict_to_domain": null,
-  "role_name": "Director Approver Level 1",
+  "role_name": "First Approver",
   "two_factor_auth": 0
  },
  {

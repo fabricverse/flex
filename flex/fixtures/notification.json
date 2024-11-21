@@ -89,7 +89,7 @@
     "parentfield": "recipients",
     "parenttype": "Notification",
     "receiver_by_document_field": null,
-    "receiver_by_role": "Director Approver Level 1"
+    "receiver_by_role": "First Approver"
    },
    {
     "bcc": "",
@@ -99,7 +99,7 @@
     "parentfield": "recipients",
     "parenttype": "Notification",
     "receiver_by_document_field": null,
-    "receiver_by_role": "Director Approver Level 2"
+    "receiver_by_role": "Final Approver"
    }
   ],
   "send_system_notification": 1,

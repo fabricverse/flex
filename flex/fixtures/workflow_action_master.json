@@ -44,6 +44,13 @@
  {
   "docstatus": 0,
   "doctype": "Workflow Action Master",
+  "modified": "2024-11-21 18:14:29.584575",
+  "name": "Revert to Accounts",
+  "workflow_action_name": "Revert to Accounts"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow Action Master",
   "modified": "2024-08-07 19:25:02.700222",
   "name": "Save",
   "workflow_action_name": "Save"

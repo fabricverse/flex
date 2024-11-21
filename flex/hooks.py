@@ -243,8 +243,8 @@ fixtures = [
         "filters": {
             "role_name": ["in", [
                 "All Finance",
-                "Director Approver Level 1",
-                "Director Approver Level 2",
+                "First Approver",
+                "Final Approver",
                 "Board Director",
                 "Director",
                 "Executive Director",
@@ -303,7 +303,7 @@ fixtures = [
         "doctype": "Workflow State",
         "filters": {
             "workflow_state_name": ["in", [
-                "Quotations Required",
+                "Attachments Required",
                 "Submitted to Accounts",
                 "Employee Revision Required",
                 "Pending Internal Check",
@@ -334,7 +334,8 @@ fixtures = [
                 "Cancel",
                 "Revise",
                 "Request Approval",
-                "Save"
+                "Save",
+                "Revert to Accounts"
             ]]
         }
     },
