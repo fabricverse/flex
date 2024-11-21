@@ -351,7 +351,8 @@ fixtures = [
             "name": ["in", [
                 "Requisition Workflow Action Required", 
                 "Payment Requisition Approval",
-                "Payment Requisition Payment"
+                "Payment Requisition Payment",
+                "Requisition Approval Query"
             ]]
         }
     }
