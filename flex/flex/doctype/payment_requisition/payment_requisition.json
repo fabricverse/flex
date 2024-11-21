@@ -250,7 +250,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "Company:company:default_currency",
    "fetch_from": "company.default_currency",
    "fetch_if_empty": 1,
    "fieldname": "currency",
@@ -610,6 +609,7 @@
   },
   {
    "fetch_from": "company.default_currency",
+   "fetch_if_empty": 1,
    "fieldname": "company_currency",
    "fieldtype": "Link",
    "hidden": 1,
@@ -620,7 +620,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-20 17:56:24.190348",
+ "modified": "2024-11-21 11:26:06.995067",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",
