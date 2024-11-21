@@ -200,8 +200,8 @@ class PaymentRequisition(Document):
 
         if self.total != total:
             self.total = total
-        if self.total_base != (total * self.conversion_rate):
-            self.total_base = flt(total * self.conversion_rate)
+        if self.total_base != (total * self.conversion_rate, 3):
+            self.total_base = flt(total * self.conversion_rate, 3)
         if self.total_qty != count:
             self.total_qty = count
 
@@ -213,8 +213,8 @@ class PaymentRequisition(Document):
 
         if self.total_expenditure != total_expenditure:
             self.total_expenditure = total_expenditure
-        if self.total_expenditure_based != (total_expenditure * self.conversion_rate):
-            self.total_expenditure_based = flt(total_expenditure * self.conversion_rate)
+        if self.total_expenditure_based != (total_expenditure * self.conversion_rate, 3):
+            self.total_expenditure_based = flt(total_expenditure * self.conversion_rate, 3)
 
         # Update deposit amount if it exceeds available balance
         if flt(self.total) != flt(self.total_expenditure) + flt(self.deposit_amount):
@@ -298,6 +298,9 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+        
+        je.flags.ignore_exchange_rate = True
+        je = self.validate_multi_currency(je)
 
         je.insert()
         je.submit()
@@ -464,21 +467,23 @@ class PaymentRequisition(Document):
         employee_account = self.get_employee_account(self.party)
         accounts = [
             {
-                'debit_in_account_currency': flt((self.total) * (self.conversion_rate or 1), 3),
+                'debit_in_account_currency': flt(self.total, 3),
                 'user_remark': str(self.remarks or ""),
                 'account': employee_account,
                 'cost_center': self.cost_center,
                 'exchange_rate': self.conversion_rate,
                 'party_type': self.party_type,
                 'party': self.party,
-                'project': self.project_name
+                'project': self.project_name,
+                'is_advance': 'Yes'
             },
             {
-                'credit_in_account_currency': flt((self.total) * (self.conversion_rate or 1), 3),
+                'credit_in_account_currency': flt(self.total, 3),
                 'user_remark': str(self.remarks or ""),
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
-                'cost_center': self.cost_center
+                'cost_center': self.cost_center,
+                'is_advance': 'Yes'
             }
         ]
 
@@ -505,6 +510,9 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+        
+        je.flags.ignore_exchange_rate = True
+        je = self.validate_multi_currency(je)
 
         je.insert()
         je.submit()
@@ -554,7 +562,7 @@ class PaymentRequisition(Document):
         # add employee account detail from which the expense is incurred
         accounts = [
             {
-                'credit_in_account_currency': flt((self.total) * (self.conversion_rate or 1), 3),
+                'credit_in_account_currency': flt(self.total, 3),
                 'exchange_rate': self.conversion_rate,                
                 'account': employee_account,
                 'project': self.project_name,
@@ -568,7 +576,7 @@ class PaymentRequisition(Document):
         for detail in self.expense_items:
             reference = " reference: " + detail.reference if detail.reference else ""
             accounts.append({
-                'debit_in_account_currency': flt((detail.amount) * (self.conversion_rate or 1), 3),
+                'debit_in_account_currency': flt(detail.amount, 3),
                 'exchange_rate': self.conversion_rate,
                 'user_remark': str((detail.description + reference) or ""),
                 'account': detail.expense_account,
@@ -581,7 +589,7 @@ class PaymentRequisition(Document):
         # add deposit of unspent amount
         if flt(self.deposit_amount) > 0:
             accounts.append({
-                'debit_in_account_currency': flt((self.deposit_amount) * (self.conversion_rate or 1, 2), 3),
+                'debit_in_account_currency': flt(self.deposit_amount, 3),
                 'user_remark': "Deposit of unspent amount reference: " + self.deposit_reference,
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
@@ -627,6 +635,9 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+        
+        je.flags.ignore_exchange_rate = True
+        je = self.validate_multi_currency(je)
 
         je.insert()
         je.submit()
@@ -649,11 +660,12 @@ class PaymentRequisition(Document):
             
             if account_key in account_entries: 
                 # increment existing entry amount amount
-                account_entries[account_key]['debit_in_account_currency'] += flt((detail.amount) * (self.conversion_rate or 1), 3)
+                account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount, 3)
             else:
                 # add entry
                 account_entries[account_key] = {
-                    'debit_in_account_currency': flt((detail.amount) * (self.conversion_rate or 1), 3),
+                    'debit_in_account_currency': flt(detail.amount, 3),
+                    'exchange_rate': self.conversion_rate,
                     'user_remark': str(detail.description),
                     'account': detail.expense_account,
                     'project': detail.project,
@@ -684,15 +696,17 @@ class PaymentRequisition(Document):
             
             if account_key in account_entries:
                 if 'credit_in_account_currency' in account_entries[account_key]:
-                    account_entries[account_key]['credit_in_account_currency'] += flt((detail.amount) * (self.conversion_rate or 1), 3)
+                    account_entries[account_key]['credit_in_account_currency'] += flt(detail.amount, 3)
                 else:
-                    account_entries[account_key]['credit_in_account_currency'] = flt((detail.amount) * (self.conversion_rate or 1), 3)
+                    account_entries[account_key]['credit_in_account_currency'] = flt(detail.amount, 3)
                     account_entries[account_key]['user_remark'] = 'Amount payable to supplier'
                     account_entries[account_key]['account'] = payable_account
+                    account_entries[account_key]['exchange_rate'] = self.conversion_rate
             else:
 
                 account_entries[account_key] = {
-                    'credit_in_account_currency': flt((detail.amount) * (self.conversion_rate or 1), 3),
+                    'credit_in_account_currency': flt(detail.amount, 3),
+                    'exchange_rate': self.conversion_rate,
                     'user_remark': 'Amount payable to supplier',
                     'account': payable_account,
                     'project': detail.project,
@@ -719,10 +733,38 @@ class PaymentRequisition(Document):
             'pay_to_recd_from': self.party,
             'bill_no': self.name
         })
+        
+        je.flags.ignore_exchange_rate = True
+        je = self.validate_multi_currency(je)
 
         je.insert()
         je.submit()
 
+        return je
+
+    
+
+    def validate_multi_currency(self, je):
+
+        alternate_currency = []
+        for d in je.get("accounts"):
+            account = frappe.get_cached_value(
+                "Account", d.account, ["account_currency", "account_type"], as_dict=1
+            )
+            if account:
+                d.account_currency = account.account_currency
+                d.account_type = account.account_type
+
+            if not d.account_currency:
+                d.account_currency = self.company_currency
+
+            if d.account_currency != self.currency:
+                je.multi_currency = True
+
+                if d.get("debit_in_account_currency"):
+                    d.debit_in_account_currency = flt(d.debit_in_account_currency * self.conversion_rate)
+                else:
+                    d.credit_in_account_currency = flt(d.credit_in_account_currency * self.conversion_rate)
         return je
 
 
@@ -743,12 +785,14 @@ class PaymentRequisition(Document):
             )
             
             if account_key in account_entries:
-                account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount * (self.conversion_rate or 1), 3)
+                account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount, 3)
                 
                 account_entries[account_key]['account'] = expense_payable_account
+                account_entries[account_key]['exchange_rate'] = self.conversion_rate
             else:
                 account_entries[account_key] = {
-                    'debit_in_account_currency': flt(detail.amount * (self.conversion_rate or 1), 3),
+                    'debit_in_account_currency': flt(detail.amount, 3),
+                    'exchange_rate': self.conversion_rate,
                     'user_remark': str(detail.description),
                     'account': expense_payable_account,
                     'project': detail.project,
@@ -788,7 +832,7 @@ class PaymentRequisition(Document):
         # add deposit of unspent amount
         if flt(self.deposit_amount) > 0:
             accounts.append({
-                'debit_in_account_currency': flt(self.deposit_amount) * (self.conversion_rate or 1),
+                'debit_in_account_currency': flt(self.deposit_amount, 3),
                 'user_remark': "Deposit of unspent amount reference: " + self.deposit_reference,
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
@@ -800,7 +844,8 @@ class PaymentRequisition(Document):
         
         # Add the payment entry
         accounts.append({
-            'credit_in_account_currency': flt(self.total * (self.conversion_rate or 1), 3),
+            'credit_in_account_currency': flt(self.total, 3),
+            'exchange_rate': self.conversion_rate,
             'user_remark': str(self.remarks),
             'account': pay_account,
             'cost_center': self.cost_center
@@ -829,6 +874,9 @@ class PaymentRequisition(Document):
             })
 
         je = frappe.get_doc(je_data)
+        
+        je.flags.ignore_exchange_rate = True
+        je = self.validate_multi_currency(je)
         je.insert()
         je.submit()
 

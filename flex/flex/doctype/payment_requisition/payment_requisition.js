@@ -195,7 +195,8 @@ frappe.ui.form.on("Payment Requisition", {
         } catch (error) {
             console.log(error.message);
             frappe.validated = false;
-			frappe.throw()
+			// frappe.throw()
+			return Promise.reject(new Error("Workflow action failed: " + error.message));
         }
 		
 		// if (frm.doc.workflow_state === 'Quotations Required' && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
@@ -210,10 +211,9 @@ frappe.ui.form.on("Payment Requisition", {
         // }
 
     },
-	currency: function(frm) {		
-		let company_currency = get_company_currency(frm.doc.company);
-		check_currency(frm, company_currency);
-		frm.toggle_display("conversion_rate", frm.doc.currency !== company_currency);
+	currency: function(frm){
+		check_currency(frm);
+		frm.toggle_display("conversion_rate", frm.doc.currency !== frm.doc.company_currency);
 	},
     validate: function(frm) {
         set_expense_items(frm);		
@@ -470,22 +470,27 @@ function change_grid_labels(frm) {
 	}
 }
 
-function check_currency(frm, company_currency){
-	frm.set_value("conversion_rate", 1);
+function check_currency(frm){
 
-	if (frm.doc.currency === company_currency || !frm.doc.currency) {
-		frm.set_value("currency", company_currency);
+	if (frm.doc.currency === frm.doc.company_currency || !frm.doc.currency) {
+		console.log('if')
+		frm.set_value("currency", frm.doc.company_currency);
+		frm.set_value("conversion_rate", 1);
 		cur_frm.set_df_property("conversion_rate", "description", "Default company currency selected");		
 	}
 	else {
-		get_exchange_rate(frm, frm.doc.date, frm.doc.currency, company_currency, function(exchange_rate) {
-			if(exchange_rate !== 0){
+		console.log('else')
+		get_exchange_rate(frm, frm.doc.date, frm.doc.currency, frm.doc.company_currency, function(exchange_rate) {
+			if(![0, 1].includes(exchange_rate) !== 0){
 				frm.set_value("conversion_rate", exchange_rate);
+			}
+			else {
+				frm.set_value("conversion_rate", 1);
 			}
 
 			//exchange rate field label
 			cur_frm.set_df_property("conversion_rate", "description", 
-				"1 " + frm.doc.currency + " = " + exchange_rate + " " + company_currency);
+				"1 " + frm.doc.currency + " = " + exchange_rate + " " + frm.doc.company_currency);
 		});
 	}
 
