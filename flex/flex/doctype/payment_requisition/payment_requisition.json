@@ -7,6 +7,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_query",
+  "query",
+  "queried_by",
+  "column_break_xjpz",
+  "query_resolution",
   "section_payment",
   "reference",
   "payment_type",
@@ -62,7 +67,7 @@
   "raised_by",
   "section_attachments",
   "first_quotation",
-  "allow_incomplete_quotations",
+  "allow_incomplete_documents",
   "column_break_ajbv",
   "second_quotation",
   "column_break_lvqu",
@@ -368,8 +373,8 @@
   {
    "fieldname": "first_quotation",
    "fieldtype": "Attach",
-   "label": "First Quotation",
-   "mandatory_depends_on": "eval: doc.allow_incomplete_quotations == 0",
+   "label": "Document 1",
+   "mandatory_depends_on": "eval: doc.allow_incomplete_documents == 0",
    "no_copy": 1,
    "print_hide": 1
   },
@@ -378,10 +383,11 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "first_quotation",
    "fieldname": "second_quotation",
    "fieldtype": "Attach",
-   "label": "Second Quotation",
-   "mandatory_depends_on": "eval: doc.allow_incomplete_quotations == 0",
+   "label": "Document 2",
+   "mandatory_depends_on": "eval: doc.allow_incomplete_documents == 0 && doc.first_quotation",
    "no_copy": 1,
    "print_hide": 1
   },
@@ -390,22 +396,15 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "second_quotation",
    "fieldname": "third_quotation",
    "fieldtype": "Attach",
-   "label": "Third Quotation",
-   "mandatory_depends_on": "eval: doc.allow_incomplete_quotations == 0",
+   "label": "Document 3",
+   "mandatory_depends_on": "eval: doc.allow_incomplete_documents == 0 && doc.second_quotation",
    "no_copy": 1,
    "print_hide": 1
   },
   {
-   "default": "1",
-   "fieldname": "allow_incomplete_quotations",
-   "fieldtype": "Check",
-   "label": "Save with incomplete quotations",
-   "no_copy": 1
-  },
-  {
-   "allow_on_submit": 1,
    "fieldname": "total_expenditure",
    "fieldtype": "Currency",
    "label": "Total Expenditure",
@@ -440,7 +439,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
    "bold": 1,
    "depends_on": "eval: doc.deposit_amount > 0",
    "fieldname": "deposit_amount",
@@ -461,6 +459,7 @@
    "fieldtype": "Table",
    "label": "Requested Items",
    "options": "Expense Entry Item",
+   "read_only_depends_on": "eval: ['Pending First Approval', 'Pending Final Approval'].includes(doc.workflow_state)",
    "reqd": 1
   },
   {
@@ -530,10 +529,11 @@
   },
   {
    "collapsible": 1,
-   "collapsible_depends_on": "eval: !doc.__islocal || (doc.first_quotation && doc.second_quotation && doc.third_quotation)",
+   "collapsible_depends_on": "eval: !doc.__islocal || (doc.first_quotation && doc.allow_incomplete_documents == 1) || (doc.first_quotation && doc.second_quotation && doc.third_quotation)",
+   "description": "These can be quotations or specific documents if quotations cant be used.",
    "fieldname": "section_attachments",
    "fieldtype": "Section Break",
-   "label": "Attach Quotations"
+   "label": "Attach Supporting Documents"
   },
   {
    "fieldname": "section_expense_items",
@@ -551,8 +551,11 @@
    "fieldtype": "Section Break"
   },
   {
+   "collapsible": 1,
+   "collapsible_depends_on": "!remarks",
    "fieldname": "section_remarks",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Remarks"
   },
   {
    "fieldname": "section_approvers",
@@ -597,7 +600,6 @@
    "read_only": 1
   },
   {
-   "allow_on_submit": 1,
    "depends_on": "eval: doc.company_currency !== doc.currency",
    "fieldname": "total_expenditure_based",
    "fieldtype": "Currency",
@@ -615,12 +617,56 @@
    "hidden": 1,
    "label": "Company Currency",
    "options": "Currency"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_incomplete_documents",
+   "fieldtype": "Check",
+   "label": "Save without all supporting documents",
+   "no_copy": 1
+  },
+  {
+   "depends_on": "eval: ([\n    'Pending Internal Check', \n    'Pending First Approval', \n    'Pending Final Approval',\n    'Queried'\n    ].includes(doc.workflow_state) && doc.query)\n    ",
+   "fieldname": "query",
+   "fieldtype": "Small Text",
+   "label": "Query",
+   "mandatory_depends_on": "eval: doc.workflow_state==\"Queried\"",
+   "max_height": "5em",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xjpz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: ([\n    'Pending Internal Check', \n    'Pending First Approval', \n    'Pending Final Approval',\n    'Queried'\n    ].includes(doc.workflow_state) && doc.queried_by)\n    ",
+   "fieldname": "queried_by",
+   "fieldtype": "Data",
+   "label": "Queried By",
+   "max_height": "5em",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: ([\n    'Pending Internal Check', \n    'Pending First Approval', \n    'Pending Final Approval'\n    ].includes(doc.workflow_state) && doc.query_resolution) || doc.workflow_state == \"Queried\"\n    ",
+   "fieldname": "query_resolution",
+   "fieldtype": "Small Text",
+   "label": "Query Resolution",
+   "mandatory_depends_on": "eval: doc.workflow_state==\"Queried\"",
+   "max_height": "5em",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "section_query",
+   "fieldtype": "Section Break",
+   "label": "Query Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-21 11:26:06.995067",
+ "modified": "2024-11-21 19:21:38.908545",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition",

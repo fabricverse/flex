@@ -14,8 +14,8 @@
  "idx": 16,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-10-28 17:26:35.572163",
- "modified": "2024-10-28 17:27:14.562188",
+ "last_synced_on": "2024-11-21 15:50:32.859358",
+ "modified": "2024-11-21 15:54:32.700313",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Expense Trends",
@@ -24,7 +24,19 @@
  "parent_document_type": "",
  "roles": [
   {
-   "role": "All Finance"
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "Final Approver"
+  },
+  {
+   "role": "First Approver"
   }
  ],
  "source": "",

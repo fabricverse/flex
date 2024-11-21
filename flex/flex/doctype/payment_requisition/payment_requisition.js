@@ -9,7 +9,7 @@ function toggle_display_sections(frm) {
 		'section_info', 'section_approvers', 'section_history'
 	];
 	not_set = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
-	quotation_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+	documents_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
 	submitted_to_accounts_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history'];
 	approvers = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
 	payment_due = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
@@ -21,24 +21,51 @@ function toggle_display_sections(frm) {
 		display_sections = all_sections.filter(field => !not_set.includes(field));
 		// console.log("no workflow set", frm.doc.workflow_state)
 	}
-	else if (frm.doc.workflow_state === 'Quotations Required'){
-		display_sections = all_sections.filter(field => !quotation_required_sections.includes(field));
+	else if (frm.doc.workflow_state === 'Attachments Required'){
+		display_sections = all_sections.filter(field => !documents_required_sections.includes(field));
 	}
 	else if (['Submitted to Accounts', 'Employee Revision Required'].includes(frm.doc.workflow_state)){ // 
 		display_sections = all_sections.filter(field => !submitted_to_accounts_sections.includes(field));
 	}
-	else if (['Pending Internal Check', 'Pending First Approval', 'Pending Final Approval'].includes(frm.doc.workflow_state)){ // 
+	else if (['Pending Internal Check'].includes(frm.doc.workflow_state)){ // 
 		display_sections = all_sections.filter(field => !approvers.includes(field));
+	}
+	else if (['Pending First Approval', 'Pending Final Approval', 'Queried'].includes(frm.doc.workflow_state)){ // 
+		display_sections = all_sections.filter(field => !approvers.includes(field));
+		
+		cur_frm.toggle_enable([
+			'activity', 
+			'project_name',
+			'cost_center',
+			'mode_of_payment',
+			'currency',
+			'conversion_rate'
+		], false);
 	}
 	else if (['Payment Due'].includes(frm.doc.workflow_state)){
 		display_sections = all_sections.filter(field => !payment_due.includes(field));
+		cur_frm.toggle_enable([
+			'activity', 
+			'project_name',
+			'cost_center',
+			'mode_of_payment',
+			'currency',
+			'conversion_rate'
+		], false);
 	}
 	else if (['Capture Expenses', 'Expense Revision'].includes(frm.doc.workflow_state)){
 		display_sections = all_sections.filter(field => !capture_expenses.includes(field));
+		frm.toggle_display(capture_expenses, true);
+
+		cur_frm.toggle_enable([
+			'activity', 
+			'project_name',
+			'cost_center',
+			'mode_of_payment',
+			'currency',
+			'conversion_rate'
+		], false);
 	}
-	// else if (['Capture Expenses', 'Accounts Verification', 'Closed'].includes(frm.doc.workflow_state)){
-	// 	display_sections = all_sections.filter(field => !capture_expenses.includes(field));
-	// }
 	else {
 		// show all
 		display_sections = all_sections;
@@ -76,13 +103,17 @@ frappe.ui.form.on("Payment Requisition", {
 		// TODO: move to py
 		// if (["Submitted to Accounts", "Pending Internal Check", "Pending First Approval", "Pending Final Approval"].includes(frm.doc.workflow_state)) {
 		// 	frm.set_value("skip_proof", 0);
-		// 	frm.set_value("allow_incomplete_quotations", 0);
+		// 	frm.set_value("allow_incomplete_documents", 0);
 		// 	frm.refresh_field("skip_proof");
-		// 	frm.refresh_field("allow_incomplete_quotations");
+		// 	frm.refresh_field("allow_incomplete_documents");
 		// }
 		
 		// console.log('refreshed')
 		// frm.refresh();
+		// if (["Capture Expenses", "Accounts Approval", "Queried"].includes(frm.doc.workflow_state)) {
+		// 	frm.reload_doc();
+		// 	// cur_frm.refresh();
+		// }
 	},
 	refresh: function(frm) {
 		let {fields, condition} = toggle_display_sections(frm);
@@ -106,13 +137,13 @@ frappe.ui.form.on("Payment Requisition", {
 		// 	'section_expense_items', 'section_expense_totals', 'section_deposit',
 		// 	'section_info', 'section_approvers', 'section_history'
 		// ];
-		// quotation_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+		// documents_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
 
-		// display_sections = all_sections.filter(field => !quotation_required_sections.includes(field));
+		// display_sections = all_sections.filter(field => !documents_required_sections.includes(field));
 		// console.log("display_sections", display_sections);
 
 		
-		// frm.toggle_display(display_sections, frm.doc.workflow_state !== 'Quotations Required');
+		// frm.toggle_display(display_sections, frm.doc.workflow_state !== 'Attachments Required');
 		
 		// deposit_button = frm.fields_dict["expense_items"].grid.add_custom_button(__('Deposit Remainder'),
 		// 	function() {
@@ -188,23 +219,22 @@ frappe.ui.form.on("Payment Requisition", {
 	before_workflow_action: async function(frm) {		
 		// Workflow Action message capture and action verification 
 		try {
-            await warn_if_quotations_are_absent(frm);
-            validate_quotations(frm);
+            await warn_if_documents_are_absent(frm);
+            validate_documents(frm);
             await verify_workflow_action(frm);
             // If all checks pass, the workflow action can proceed
         } catch (error) {
-            console.log(error.message);
             frappe.validated = false;
 			// frappe.throw()
 			return Promise.reject(new Error("Workflow action failed: " + error.message));
         }
 		
-		// if (frm.doc.workflow_state === 'Quotations Required' && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
+		// if (frm.doc.workflow_state === 'Attachments Required' && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
         //     frappe.dom.unfreeze(); // Unfreeze the screen to allow user interaction  
 			
         //     return new Promise((resolve, reject) => {
         //         frappe.msgprint(
-        //             'Quotations are required before submitting the Payment Requisition.'
+        //             'Supporting documents are required before submitting the Payment Requisition.'
         //         );
 		// 		return false;
         //     });
@@ -473,13 +503,11 @@ function change_grid_labels(frm) {
 function check_currency(frm){
 
 	if (frm.doc.currency === frm.doc.company_currency || !frm.doc.currency) {
-		console.log('if')
 		frm.set_value("currency", frm.doc.company_currency);
 		frm.set_value("conversion_rate", 1);
 		cur_frm.set_df_property("conversion_rate", "description", "Default company currency selected");		
 	}
 	else {
-		console.log('else')
 		get_exchange_rate(frm, frm.doc.date, frm.doc.currency, frm.doc.company_currency, function(exchange_rate) {
 			if(![0, 1].includes(exchange_rate) !== 0){
 				frm.set_value("conversion_rate", exchange_rate);
@@ -555,14 +583,14 @@ function set_expense_items(frm) {
 }
 
 
-function warn_if_quotations_are_absent(frm) {
-	// prompts the user to confirm if they want to proceed without quotations
+function warn_if_documents_are_absent(frm) {
+	// prompts the user to confirm if they want to proceed without documents
 	const action = frm.selected_workflow_action;
-	if (['Request Executive Approval', 'Quotations Required'].includes(action) && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
+	if (['Request Executive Approval', 'Attachments Required'].includes(action) && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
 		frappe.dom.unfreeze(); // Unfreeze the screen to allow user interaction
 		return new Promise((resolve, reject) => { 
 			frappe.confirm(
-				'Are you sure you want to <strong>' + action.toLowerCase() + '</strong> without any quotations?',
+				'Are you sure you want to <strong>' + action.toLowerCase() + '</strong> without any supporting documents?',
 				function() {
 					resolve();
 				},
@@ -574,12 +602,12 @@ function warn_if_quotations_are_absent(frm) {
 	}
 }
 
-function validate_quotations(frm) {
-	// prevents user from submitting the form without all the quotations if allow_incomplete_quotations is not checked
-	if (['Quotations Required', 'Submitted to Accounts', 'Ready for Submission'].includes(frm.doc.workflow_state)) {
-		if (frm.doc.allow_incomplete_quotations === 0 && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
+function validate_documents(frm) {
+	// prevents user from submitting the form without all the documents if allow_incomplete_documents is not checked
+	if (['Attachments Required', 'Submitted to Accounts', 'Ready for Submission'].includes(frm.doc.workflow_state)) {
+		if (frm.doc.allow_incomplete_documents === 0 && (!frm.doc.first_quotation || !frm.doc.second_quotation || !frm.doc.third_quotation)) {
 			frappe.dom.unfreeze();
-			frappe.throw(__("Please upload all quotations or tick the <strong>Save with incomplete quotations</strong> checkbox. To proceed without all required quotations."));
+			frappe.throw(__("Please upload all supporting documents or tick the <strong>Save with incomplete supporting documents</strong> checkbox. To proceed without all required documents."));
 		}
 	}
 }
@@ -608,7 +636,7 @@ function add_comment(frm, title='Add a Comment'){
 				if (strip_html(comment).trim() !== "" || comment.includes("img")) {
 					commentBox.disable();
 					frappe
-						.xcall("frappe.desk.form.utils.add_comment", {
+						.xcall("flex.app.save_comment", {
 							reference_doctype: frm.doc.doctype,
 							reference_name: frm.doc.name,
 							content: comment,
@@ -616,7 +644,11 @@ function add_comment(frm, title='Add a Comment'){
 							comment_by: frappe.session.user_fullname,
 						})
 						.then((new_comment) => {
-							cur_frm.reload_doc();
+							// frappe.db.set_value(frm.doc.doctype, frm.doc.name, {
+							// 	queried_by: frappe.session.user_fullname,
+							// 	query: comment
+							//    })
+							frm.reload_doc();
 							
 							// Close the dialog
 							dialog.hide();
@@ -684,7 +716,25 @@ function verify_workflow_action(frm) {
     return new Promise((resolve, reject) => {
         frappe.dom.unfreeze(); // Unfreeze the form
 
-        if (['Approve', 'Request Approval', 'Submit', 'Request Executive Approval'].includes(action)) {
+		if (['Submit', 'Approve'].includes(action) && frm.doc.workflow_state === "Queried") {
+			if(!frm.doc.query_resolution){
+				frappe.msgprint("<strong>Query Resolution</strong> is required.", title="Mandatory")
+				reject(new Error("Action cancelled by user"));
+			}
+			else{
+				frappe.confirm(
+					'Are you sure you want to <strong>' + action.toLowerCase() + '</strong>?',
+					() => {
+						resolve();
+					},
+					() => {
+						reject(new Error("Action cancelled by user"));
+					}
+				);
+				
+		}
+        }
+        else if (['Approve', 'Request Approval', 'Submit', 'Request Executive Approval'].includes(action)) {
             frappe.confirm(
                 'Are you sure you want to <strong>' + action.toLowerCase() + '</strong>?',
                 () => {
@@ -694,7 +744,9 @@ function verify_workflow_action(frm) {
                     reject(new Error("Action cancelled by user"));
                 }
             );
-        } else if (['Reject', 'Cancel', 'Request Revision', 'Request Employee Revision', 'Request Expense Revision'].includes(action)) {
+        } else if (
+				['Reject', 'Cancel', 'Request Employee Revision', 'Request Expense Revision', 'Query'].includes(action)
+			) {
 			// Call the add_comment function and wait for the promise to resolve or reject
             const commentPromise = add_comment(frm, 'A comment is required');
 

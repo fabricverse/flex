@@ -13,7 +13,7 @@ class PaymentRequisition(Document):
         self.name = self.generate_custom_name()
     
     def after_insert(self):
-        self.db_set("allow_incomplete_quotations", 0)
+        self.db_set("allow_incomplete_documents", 0)
         self.notify_update()
     
     @frappe.whitelist()
@@ -24,7 +24,7 @@ class PaymentRequisition(Document):
 
         self.calculate_totals()
 
-        if self.workflow_state == "Accounts Verification":
+        if self.workflow_state in ["Accounts Approval"]:
             self.validate_totals()
         
         if self.workflow_state == "Capture Expenses" and not self.payable_journal_entry:
@@ -86,8 +86,7 @@ class PaymentRequisition(Document):
                     msg="Total Expenditure (and Deposited Amount) cannot exceed the requisitioned amount."
                 )
         return True
-    def on_change(self): # update
-        pass
+
 
     def check_attachments(self, user):
         """
@@ -99,7 +98,7 @@ class PaymentRequisition(Document):
                 - submitted without quotations
                 - submitted with quotations
         2nd: wf state = submitted to accounts
-            - quotations required by accounts user: wf state = submitted to accounts
+            - Attachments Required by accounts user: wf state = submitted to accounts
             - next action:  submit for internal approval
         
         """
@@ -118,7 +117,7 @@ class PaymentRequisition(Document):
 
         workflow_changed = self.has_value_changed("workflow_state")
         if workflow_changed:
-            workflow_state = "Quotations Required"
+            workflow_state = "Attachments Required"
             if self.workflow_state:
                 workflow_state = self.workflow_state
             if len(self.approval_history) < 1:
@@ -139,7 +138,7 @@ class PaymentRequisition(Document):
         user = frappe.get_doc("User", frappe.session.user)
         self.apply_workflow(user)
         
-        if self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Quotations Required", "Revision Requested", "Employee Revision Required"]:
+        if self.docstatus == 0 and self.workflow_state in ["Submitted to Accounts", "Attachments Required", "Revision Requested", "Employee Revision Required"]:
             if not self.raised_by:
                 owner = frappe.get_doc("User", self.owner)
                 self.raised_by = owner.full_name
@@ -149,13 +148,13 @@ class PaymentRequisition(Document):
             self.initial_approver = "Pending"
             self.final_approver = "Pending"
 
-        if self.workflow_state in ["Quotations Required", "Submitted to Accounts", "Ready for Submission"]:
+        if self.workflow_state in ["Attachments Required", "Submitted to Accounts"]:
 
             if self.user_has_role(user, ["Accounts User", "Accounts Manager"]) and self.submitted_by == "Pending":
                 self.submitted_by = user.full_name
                 
 
-        if self.workflow_state in ["Ready for Submission", "Pending Internal Check",]:
+        if self.workflow_state in ["Pending Internal Check"]:
             if not self.submitted_by or self.submitted_by != user.full_name:
                 self.submitted_by = user.full_name
 
@@ -339,7 +338,6 @@ class PaymentRequisition(Document):
         for journal in journals:
             frappe.db.set_value("Journal Entry", journal.name, "docstatus", 2)
 
-        # if self.workflow_state != "Cancelled":
         self.workflow_state = "Cancelled"        
         self.docstatus = 1
     

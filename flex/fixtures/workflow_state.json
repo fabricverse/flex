@@ -30,42 +30,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-08-22 19:18:10.017310",
-  "name": "Awaiting Director Approval (2)",
-  "style": "Success",
-  "workflow_state_name": "Awaiting Director Approval (2)"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-08-22 19:18:09.979880",
-  "name": "Awaiting Director Approval (1)",
-  "style": "Success",
-  "workflow_state_name": "Awaiting Director Approval (1)"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-08-22 17:45:35.760102",
-  "name": "Quotations Required",
-  "style": "Warning",
-  "workflow_state_name": "Quotations Required"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-08-22 19:18:10.041516",
-  "name": "Awaiting Internal Approval",
-  "style": "Success",
-  "workflow_state_name": "Awaiting Internal Approval"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-08-22 17:45:35.808722",
   "name": "Revision Requested",
   "style": "Warning",
@@ -75,36 +39,27 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-10-23 18:48:06.054042",
+  "modified": "2024-11-21 19:41:29.648134",
   "name": "Payment Due",
-  "style": "",
+  "style": "Danger",
   "workflow_state_name": "Payment Due"
  },
  {
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-10-23 18:50:21.267076",
+  "modified": "2024-11-21 19:42:05.685691",
   "name": "Capture Expenses",
-  "style": "",
+  "style": "Warning",
   "workflow_state_name": "Capture Expenses"
  },
  {
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-10-23 18:58:16.520055",
-  "name": "Accounts Approval",
-  "style": "",
-  "workflow_state_name": "Accounts Approval"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-10-23 19:14:19.955376",
+  "modified": "2024-11-21 19:41:47.430029",
   "name": "Expense Revision",
-  "style": "",
+  "style": "Warning",
   "workflow_state_name": "Expense Revision"
  },
  {
@@ -124,5 +79,59 @@
   "name": "Closed",
   "style": "Info",
   "workflow_state_name": "Closed"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-19 12:55:15.994411",
+  "name": "Pending First Approval",
+  "style": "Info",
+  "workflow_state_name": "Pending First Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-19 12:57:49.542625",
+  "name": "Pending Final Approval",
+  "style": "Primary",
+  "workflow_state_name": "Pending Final Approval"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-19 12:57:35.514147",
+  "name": "Pending Internal Check",
+  "style": "Info",
+  "workflow_state_name": "Pending Internal Check"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-19 12:54:58.654963",
+  "name": "Accounts Verification",
+  "style": "Success",
+  "workflow_state_name": "Accounts Verification"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-21 16:28:46.832575",
+  "name": "Attachments Required",
+  "style": "Warning",
+  "workflow_state_name": "Attachments Required"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "search",
+  "modified": "2024-11-21 18:23:03.236202",
+  "name": "Queried",
+  "style": "Warning",
+  "workflow_state_name": "Queried"
  }
 ]
