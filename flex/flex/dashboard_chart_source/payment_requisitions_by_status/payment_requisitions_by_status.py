@@ -35,9 +35,9 @@ def get(
 	requisitions = frappe.db.sql("""
 		SELECT 
 			CASE 
-				WHEN workflow_state IN %s THEN "Completed"
-				WHEN workflow_state IN %s THEN "For Approval"
+				WHEN workflow_state IN %s THEN "Pending"
 				WHEN workflow_state IN %s THEN "Queried"
+				WHEN workflow_state IN %s THEN "Completed"
 			END as status,
 			COUNT(*) as count
 		FROM `tabPayment Requisition`
@@ -45,14 +45,14 @@ def get(
 			AND company = %s
 		GROUP BY 
 			CASE 
-				WHEN workflow_state IN %s THEN "Completed"
-				WHEN workflow_state IN %s THEN "For Approval"
+				WHEN workflow_state IN %s THEN "Pending"
 				WHEN workflow_state IN %s THEN "Queried"
+				WHEN workflow_state IN %s THEN "Completed"
 			END
-	""", (primary_statuses, pending_approval_statuses, queried_status,
-		  primary_statuses, pending_approval_statuses, queried_status,
+	""", (pending_approval_statuses, queried_status, primary_statuses,
+		  pending_approval_statuses, queried_status, primary_statuses, 
 		  company,
-		  primary_statuses, pending_approval_statuses, queried_status), as_dict=1)
+		  pending_approval_statuses, queried_status, primary_statuses), as_dict=1)
 
 	if not requisitions:
 		return []
