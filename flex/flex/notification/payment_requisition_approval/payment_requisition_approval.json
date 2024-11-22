@@ -20,22 +20,22 @@
  "owner": "Administrator",
  "recipients": [
   {
-   "condition": "doc.workflow_state == \"Awaiting Internal Approval\"",
+   "condition": "doc.workflow_state == \"Pending Internal Check\"",
    "receiver_by_role": "Executive Director"
   },
   {
-   "bcc": "doc.workflow_state in [\"Awaiting Internal Approval\", \"Cancelled\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
-   "condition": "doc.workflow_state in [\"Awaiting Internal Approval\", \"Cancelled\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
+   "bcc": "doc.workflow_state in [\"Pending Internal Check\", \"Cancelled\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
+   "condition": "doc.workflow_state in [\"Pending Internal Check\", \"Cancelled\", \"Revision Requested\", \"Rejected\", \"Approved\"]",
    "receiver_by_role": "Accounts Manager"
   },
   {
-   "condition": "doc.workflow_state in [\"Awaiting Director Approval (1)\"]",
-   "receiver_by_role": "Board Director L1"
+   "condition": "doc.workflow_state in [\"Pending First Approval\"]",
+   "receiver_by_role": "First Approver"
   },
   {
    "bcc": "",
-   "condition": "doc.workflow_state in [\"Awaiting Director Approval (2)\"]",
-   "receiver_by_role": "Board Director L2"
+   "condition": "doc.workflow_state in [\"Pending Final Approval\"]",
+   "receiver_by_role": "Final Approver"
   },
   {
    "condition": "doc.workflow_state in [\"Cancelled\"]",

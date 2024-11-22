@@ -14,8 +14,8 @@
  "idx": 16,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-11-21 15:50:32.859358",
- "modified": "2024-11-21 15:54:32.700313",
+ "last_synced_on": "2024-11-22 10:00:27.444031",
+ "modified": "2024-11-22 10:01:02.268240",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Expense Trends",
@@ -33,10 +33,10 @@
    "role": "Executive Director"
   },
   {
-   "role": "Final Approver"
+   "role": "First Approver"
   },
   {
-   "role": "First Approver"
+   "role": "Final Approver"
   }
  ],
  "source": "",
@@ -45,6 +45,6 @@
  "timespan": "Last Year",
  "type": "Bar",
  "use_report_chart": 0,
- "value_based_on": "total_expenditure",
+ "value_based_on": "total_expenditure_based",
  "y_axis": []
 }

@@ -15,15 +15,34 @@
  "idx": 48,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-08-28 20:48:15.518252",
- "modified": "2024-08-28 20:48:24.991482",
+ "last_synced_on": "2024-11-21 20:25:04.406266",
+ "modified": "2024-11-22 11:04:02.947340",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Supported Communities",
  "number_of_groups": 3,
  "owner": "Administrator",
  "parent_document_type": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "Projects User"
+  },
+  {
+   "role": "Projects Manager"
+  },
+  {
+   "role": "First Approver"
+  },
+  {
+   "role": "Final Approver"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "Director"
+  }
+ ],
  "source": "",
  "time_interval": "Yearly",
  "timeseries": 0,

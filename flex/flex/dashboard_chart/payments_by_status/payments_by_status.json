@@ -15,14 +15,36 @@
  "is_public": 1,
  "is_standard": 1,
  "last_synced_on": "2024-08-26 16:01:52.256137",
- "modified": "2024-08-26 19:07:47.193646",
+ "modified": "2024-11-22 11:01:33.569286",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payments by Status",
  "number_of_groups": 3,
  "owner": "Administrator",
  "parent_document_type": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Director"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "Employee Self Service"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "All Finance"
+  }
+ ],
  "source": "",
  "time_interval": "Weekly",
  "timeseries": 0,

@@ -16,8 +16,8 @@
  "idx": 0,
  "is_public": 1,
  "is_standard": 1,
- "last_synced_on": "2024-10-28 17:27:17.302379",
- "modified": "2024-10-28 17:27:33.352490",
+ "last_synced_on": "2024-11-22 10:01:04.492421",
+ "modified": "2024-11-22 10:01:46.771407",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition Approvals",
@@ -27,6 +27,21 @@
  "roles": [
   {
    "role": "All Finance"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "First Approver"
+  },
+  {
+   "role": "Final Approver"
   }
  ],
  "source": "Payment Requisitions by Status",

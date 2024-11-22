@@ -20,13 +20,14 @@ def get(
 	filters = frappe.parse_json(filters)
 
 	# filter the payment requisitions by status
-	pending_approval_statuses = ("Submitted to Accounts", "Awaiting Internal Approval", 
-							   "Awaiting Director Approval (1)", "Awaiting Director Approval (2)", 
+	pending_approval_statuses = ("Submitted to Accounts", "Pending Internal Check", 
+							   "Pending First Approval", "Pending Final Approval", 
 							   "Accounts Approval", "Payment Due")
 	primary_statuses = ("Closed",)
-	other_statuses = ("Quotations Required", "Employee Revision Required", 
+	queried_status = ("Queried",)
+	"""("Quotations Required", "Employee Revision Required", 
 						"Capture Expenses", "Revision Requested",
-						"Expense Revision", "Cancelled", "Rejected")
+						"Expense Revision", "Cancelled", "Rejected")"""
 	
 	company = frappe.defaults.get_user_default("Company")
 
@@ -36,7 +37,7 @@ def get(
 			CASE 
 				WHEN workflow_state IN %s THEN "Completed"
 				WHEN workflow_state IN %s THEN "For Approval"
-				WHEN workflow_state IN %s THEN "Others"
+				WHEN workflow_state IN %s THEN "Queried"
 			END as status,
 			COUNT(*) as count
 		FROM `tabPayment Requisition`
@@ -46,12 +47,12 @@ def get(
 			CASE 
 				WHEN workflow_state IN %s THEN "Completed"
 				WHEN workflow_state IN %s THEN "For Approval"
-				WHEN workflow_state IN %s THEN "Others"
+				WHEN workflow_state IN %s THEN "Queried"
 			END
-	""", (primary_statuses, pending_approval_statuses, other_statuses,
-		  primary_statuses, pending_approval_statuses, other_statuses,
+	""", (primary_statuses, pending_approval_statuses, queried_status,
+		  primary_statuses, pending_approval_statuses, queried_status,
 		  company,
-		  primary_statuses, pending_approval_statuses, other_statuses), as_dict=1)
+		  primary_statuses, pending_approval_statuses, queried_status), as_dict=1)
 
 	if not requisitions:
 		return []

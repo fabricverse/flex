@@ -65,24 +65,6 @@
  {
   "docstatus": 0,
   "doctype": "Workflow State",
-  "icon": "remove",
-  "modified": "2019-11-20 10:24:47.832511",
-  "name": "Rejected",
-  "style": "Danger",
-  "workflow_state_name": "Rejected"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2020-04-02 12:34:04.584370",
-  "name": "Closed",
-  "style": "Info",
-  "workflow_state_name": "Closed"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
   "icon": "",
   "modified": "2024-11-19 12:55:15.994411",
   "name": "Pending First Approval",
@@ -133,5 +115,23 @@
   "name": "Queried",
   "style": "Warning",
   "workflow_state_name": "Queried"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "remove",
+  "modified": "2019-11-20 10:24:47.832511",
+  "name": "Rejected",
+  "style": "Danger",
+  "workflow_state_name": "Rejected"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2020-04-02 12:34:04.584370",
+  "name": "Closed",
+  "style": "Info",
+  "workflow_state_name": "Closed"
  }
 ]
