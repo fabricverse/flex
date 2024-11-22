@@ -12,14 +12,36 @@
  "idx": 0,
  "is_public": 1,
  "is_standard": 1,
- "modified": "2024-08-26 15:54:55.196446",
+ "modified": "2024-11-22 11:02:02.251537",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Fiscal Year Expendure",
  "number_of_groups": 0,
  "owner": "Administrator",
  "parent_document_type": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Director"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "Employee Self Service"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "All Finance"
+  }
+ ],
  "source": "",
  "time_interval": "Quarterly",
  "timeseries": 1,

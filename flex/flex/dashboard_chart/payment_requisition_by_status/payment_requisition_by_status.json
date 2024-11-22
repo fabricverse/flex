@@ -15,14 +15,36 @@
  "is_public": 1,
  "is_standard": 1,
  "last_synced_on": "2024-08-26 15:00:37.857998",
- "modified": "2024-08-26 15:03:56.982890",
+ "modified": "2024-11-22 11:02:22.421059",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition by Status",
  "number_of_groups": 4,
  "owner": "Administrator",
  "parent_document_type": "",
- "roles": [],
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Director"
+  },
+  {
+   "role": "Executive Director"
+  },
+  {
+   "role": "Employee Self Service"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "All Finance"
+  }
+ ],
  "source": "",
  "time_interval": "Yearly",
  "timeseries": 0,

@@ -144,10 +144,10 @@ class TestPaymentRequisition(FrappeTestCase):
 		# Test main workflow path
 		main_transitions = [
 			("Quotations Required", "Submitted to Accounts"),
-			("Submitted to Accounts", "Awaiting Internal Approval"),
-			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
-			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
-			("Awaiting Director Approval (2)", "Payment Due"),
+			("Submitted to Accounts", "Pending Internal Check"),
+			("Pending Internal Check", "Pending First Approval"),
+			("Pending First Approval", "Pending Final Approval"),
+			("Pending Final Approval", "Payment Due"),
 			("Payment Due", "Capture Expenses"),
 			("Capture Expenses", "Accounts Approval"),
 			("Accounts Approval", "Closed")
@@ -162,9 +162,9 @@ class TestPaymentRequisition(FrappeTestCase):
 		revision_transitions = [
 			("Submitted to Accounts", "Employee Revision Required"),
 			("Employee Revision Required", "Submitted to Accounts"),
-			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
-			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
-			("Awaiting Director Approval (2)", "Payment Due"),
+			("Pending Internal Check", "Pending First Approval"),
+			("Pending First Approval", "Pending Final Approval"),
+			("Pending Final Approval", "Payment Due"),
 			("Capture Expenses", "Accounts Approval"),
 			("Accounts Approval","Expense Revision")
 		]
@@ -178,9 +178,9 @@ class TestPaymentRequisition(FrappeTestCase):
 		rejection_transitions = [
 			("Submitted to Accounts", "Employee Revision Required"),
 			("Employee Revision Required", "Submitted to Accounts"),
-			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
-			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
-			("Awaiting Director Approval (2)", "Rejected"),
+			("Pending Internal Check", "Pending First Approval"),
+			("Pending First Approval", "Pending Final Approval"),
+			("Pending Final Approval", "Rejected"),
 			("Rejected", "Cancelled")
 		]
 		self._test_workflow_transitions(pr, rejection_transitions)
@@ -224,9 +224,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			workflow_states = [
 				"Quotations Required",
 				"Submitted to Accounts",
-				"Awaiting Internal Approval",
-				"Awaiting Director Approval (1)",
-				"Awaiting Director Approval (2)",
+				"Pending Internal Check",
+				"Pending First Approval",
+				"Pending Final Approval",
 				"Payment Due",
 				"Capture Expenses",
 				"Accounts Approval",
@@ -294,10 +294,10 @@ class TestPaymentRequisition(FrappeTestCase):
 		# Test main workflow path for supplier
 		supplier_transitions = [
 			("Quotations Required", "Submitted to Accounts"),
-			("Submitted to Accounts", "Awaiting Internal Approval"),
-			("Awaiting Internal Approval", "Awaiting Director Approval (1)"),
-			("Awaiting Director Approval (1)", "Awaiting Director Approval (2)"),
-			("Awaiting Director Approval (2)", "Payment Due"),
+			("Submitted to Accounts", "Pending Internal Check"),
+			("Pending Internal Check", "Pending First Approval"),
+			("Pending First Approval", "Pending Final Approval"),
+			("Pending Final Approval", "Payment Due"),
 			("Payment Due", "Capture Expenses"),
 			("Capture Expenses", "Accounts Approval"),
 			("Accounts Approval", "Closed")
@@ -399,9 +399,9 @@ class TestPaymentRequisition(FrappeTestCase):
 			workflow_states = [
 				"Quotations Required",
 				"Submitted to Accounts",
-				"Awaiting Internal Approval",
-				"Awaiting Director Approval (1)",
-				"Awaiting Director Approval (2)",
+				"Pending Internal Check",
+				"Pending First Approval",
+				"Pending Final Approval",
 				"Payment Due",
 				"Capture Expenses",
 				"Accounts Approval",
