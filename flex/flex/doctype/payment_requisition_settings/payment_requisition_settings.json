@@ -7,7 +7,9 @@
  "field_order": [
   "skip_payable_journal_entry",
   "accounts_section",
-  "default_payable_account"
+  "default_payable_account",
+  "column_break_youb",
+  "default_cost_center"
  ],
  "fields": [
   {
@@ -27,13 +29,24 @@
    "label": "Default Payable Account",
    "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Liability\"],[\"Account\",\"is_group\",\"=\",0]]",
    "options": "Account"
+  },
+  {
+   "fieldname": "column_break_youb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_cost_center",
+   "fieldtype": "Link",
+   "label": "Default Cost Center",
+   "link_filters": "[[\"Cost Center\",\"is_group\",\"=\",0],[\"Cost Center\",\"disabled\",\"=\",0]]",
+   "options": "Cost Center"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-12 15:07:16.207046",
+ "modified": "2024-11-23 15:47:24.947536",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Payment Requisition Settings",

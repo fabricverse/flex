@@ -349,6 +349,12 @@ fixtures = [
         }
     },
     {
+        "doctype": "Client Script",
+        "filters": {
+            "module": ["=", "Flex"]
+        }
+    },
+    {
         "doctype": "Notification",
         "filters": {
             "name": ["in", [
