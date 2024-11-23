@@ -121,6 +121,9 @@ frappe.ui.form.on("Payment Requisition", {
 	total: function(frm){
 		set_cost_center(frm);
 	},
+	activity: function(frm){
+		set_cost_center(frm);
+	},
 	refresh: function(frm) {
 		let {fields, condition} = toggle_display_sections(frm);
 		frm.toggle_display(fields, condition);
