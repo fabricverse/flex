@@ -115,6 +115,12 @@ frappe.ui.form.on("Payment Requisition", {
 		// 	// cur_frm.refresh();
 		// }
 	},
+	mode_of_payment: function(frm){
+		set_cost_center(frm);
+	},
+	total: function(frm){
+		set_cost_center(frm);
+	},
 	refresh: function(frm) {
 		let {fields, condition} = toggle_display_sections(frm);
 		frm.toggle_display(fields, condition);
@@ -247,6 +253,7 @@ frappe.ui.form.on("Payment Requisition", {
 	},
     validate: function(frm) {
         set_expense_items(frm);		
+		set_cost_center(frm);
         
     },
 	onload: function(frm) {
@@ -768,5 +775,15 @@ function verify_workflow_action(frm) {
     });
 }
 
-
-
+function set_cost_center(frm){
+	if(!frm.doc.cost_center && !frm.doc.project_name){
+		frappe.db.get_value('Payment Requisition Settings', 'Payment Requisition Settings', ['default_cost_center'])
+		.then(r => {
+			let values = r.message;
+			if(values.default_cost_center){
+				frm.set_value('cost_center',values.default_cost_center);
+				frm.refresh_field('cost_center');
+			}
+		});
+	}
+}
