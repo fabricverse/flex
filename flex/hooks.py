@@ -140,6 +140,9 @@ doc_events = {
 	},
 	"Expense Request": {
 		"validate": "flex.approve_expense.approve"
+	},
+	"Project": {
+		"after_insert": "flex.app.create_project_cost_center"
 	}
 }
 

@@ -2,6 +2,34 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+
+def create_project_cost_center(doc, method):
+    company = frappe.get_doc("Company", doc.company)
+    projects_cc = f"Projects - {company.abbr}"
+
+    if not frappe.db.exists("Cost Center", projects_cc):
+
+        cc = frappe.new_doc("Cost Center")
+        cc.cost_center_name = "Projects"
+        cc.parent_cost_center = f"{company.name} - {company.abbr}"
+        cc.is_group = 1
+        cc.company = doc.company
+
+        cc.insert(ignore_permissions=True)
+
+
+    cc = frappe.new_doc("Cost Center")
+    cc.cost_center_name = f"{doc.project_name}"
+    cc.parent_cost_center = projects_cc
+    cc.is_group = 0
+    cc.company = doc.company
+    
+    cc.insert(ignore_permissions=True)
+
+    doc.cost_center = cc.name
+    doc.db_update()
+
+
 @frappe.whitelist()
 def requisition_action(name, action):
     doc = frappe.get_doc("Payment Requisition", name)
