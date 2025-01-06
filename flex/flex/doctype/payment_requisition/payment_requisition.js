@@ -1,5 +1,9 @@
 // Copyright (c) 2024, Fabric and contributors
 // For license information, please see license.txt
+
+function toggle_display_fields(frm) {
+	frm.toggle_display("conversion_rate", frm.doc.currency !== frm.doc.company_currency);
+}
 function toggle_display_sections(frm) {
 	// hide all other fields except for the ones applicable to the workflow state
 	all_sections = [
@@ -127,6 +131,7 @@ frappe.ui.form.on("Payment Requisition", {
 	refresh: function(frm) {
 		let {fields, condition} = toggle_display_sections(frm);
 		frm.toggle_display(fields, condition);
+		toggle_display_fields(frm);
 
 		fields.forEach(field => refresh_field(field));
 		
@@ -251,8 +256,8 @@ frappe.ui.form.on("Payment Requisition", {
 
     },
 	currency: function(frm){
-		check_currency(frm);
-		frm.toggle_display("conversion_rate", frm.doc.currency !== frm.doc.company_currency);
+		toggle_display_fields(frm);
+		frm.refresh_field('conversion_rate')
 	},
     validate: function(frm) {
         set_expense_items(frm);		
