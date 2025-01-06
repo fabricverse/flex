@@ -12,15 +12,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-08-22 19:18:09.932957",
-  "name": "Submitted to Accounts",
-  "style": "Success",
-  "workflow_state_name": "Submitted to Accounts"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-08-22 17:48:27.492870",
   "name": "Cancelled",
   "style": "Danger",
@@ -101,15 +92,6 @@
  {
   "docstatus": 0,
   "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-11-21 16:28:46.832575",
-  "name": "Attachments Required",
-  "style": "Warning",
-  "workflow_state_name": "Attachments Required"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
   "icon": "search",
   "modified": "2024-11-21 18:23:03.236202",
   "name": "Queried",
@@ -133,5 +115,23 @@
   "name": "Closed",
   "style": "Info",
   "workflow_state_name": "Closed"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-08-22 19:18:09.932957",
+  "name": "Submitted to Accounts",
+  "style": "Success",
+  "workflow_state_name": "Submitted to Accounts"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-21 16:28:46.832575",
+  "name": "Attachments Required",
+  "style": "Warning",
+  "workflow_state_name": "Attachments Required"
  }
 ]
