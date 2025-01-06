@@ -257,7 +257,7 @@ frappe.ui.form.on("Payment Requisition", {
     },
 	currency: function(frm){
 		toggle_display_fields(frm);
-		frm.refresh_field('conversion_rate')
+		check_currency(frm);
 	},
     validate: function(frm) {
         set_expense_items(frm);		
