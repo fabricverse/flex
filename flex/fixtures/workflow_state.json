@@ -3,15 +3,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-08-22 17:45:35.722331",
-  "name": "Employee Revision Required",
-  "style": "Warning",
-  "workflow_state_name": "Employee Revision Required"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-08-22 17:48:27.492870",
   "name": "Cancelled",
   "style": "Danger",
@@ -115,6 +106,15 @@
   "name": "Closed",
   "style": "Info",
   "workflow_state_name": "Closed"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-08-22 17:45:35.722331",
+  "name": "Employee Revision Required",
+  "style": "Warning",
+  "workflow_state_name": "Employee Revision Required"
  },
  {
   "docstatus": 0,
