@@ -1,137 +1,32 @@
 // Copyright (c) 2024, Fabric and contributors
 // For license information, please see license.txt
 
-function toggle_display_fields(frm) {
-	frm.toggle_display("conversion_rate", frm.doc.currency !== frm.doc.company_currency);
-}
-function toggle_display_sections(frm) {
-	// hide all other fields except for the ones applicable to the workflow state
-	all_sections = [
-		'section_transaction', 'section_currency', 'section_posting', 'section_request_items', 'section_request_totals', 
-		'section_attachments', 'section_remarks',
-		'section_expense_items', 'section_expense_totals', 'section_deposit',
-		'section_info', 'section_approvers', 'section_history'
-	];
-	not_set = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
-	documents_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
-	submitted_to_accounts_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history'];
-	approvers = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
-	payment_due = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
-	capture_expenses = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers', 'section_expense_items', 'section_expense_totals', 'section_deposit', 'section_info'];
+function setup_field_filters(frm){
 
-	let display_sections = [];
-	let condition = false;
-	if (!frm.doc.workflow_state){ // before wf is set
-		display_sections = all_sections.filter(field => !not_set.includes(field));
-		// console.log("no workflow set", frm.doc.workflow_state)
-	}
-	else if (frm.doc.workflow_state === 'Attachments Required'){
-		display_sections = all_sections.filter(field => !documents_required_sections.includes(field));
-	}
-	else if (['Submitted to Accounts', 'Employee Revision Required'].includes(frm.doc.workflow_state)){ // 
-		display_sections = all_sections.filter(field => !submitted_to_accounts_sections.includes(field));
-	}
-	else if (['Pending Internal Check'].includes(frm.doc.workflow_state)){ // 
-		display_sections = all_sections.filter(field => !approvers.includes(field));
-	}
-	else if (['Pending First Approval', 'Pending Final Approval', 'Queried'].includes(frm.doc.workflow_state)){ // 
-		display_sections = all_sections.filter(field => !approvers.includes(field));
-		
-		cur_frm.toggle_enable([
-			'activity', 
-			'project_name',
-			'cost_center',
-			'mode_of_payment',
-			'currency',
-			'conversion_rate'
-		], false);
-	}
-	else if (['Payment Due'].includes(frm.doc.workflow_state)){
-		display_sections = all_sections.filter(field => !payment_due.includes(field));
-		cur_frm.toggle_enable([
-			'activity', 
-			'project_name',
-			'cost_center',
-			'mode_of_payment',
-			'currency',
-			'conversion_rate'
-		], false);
-	}
-	else if (['Capture Expenses', 'Expense Revision'].includes(frm.doc.workflow_state)){
-		display_sections = all_sections.filter(field => !capture_expenses.includes(field));
-		frm.toggle_display(capture_expenses, true);
-
-		cur_frm.toggle_enable([
-			'activity', 
-			'project_name',
-			'cost_center',
-			'mode_of_payment',
-			'currency',
-			'conversion_rate'
-		], false);
-	}
-	else {
-		// show all
-		display_sections = all_sections;
-		condition = true;
-	}
-
-	// console.log("display_sections", display_sections, frm.doc.workflow_state);
-	
-	return {
-		fields: display_sections,
-		condition: condition
-	};
+	frappe.db.get_list('Employee', {
+		fields: ['name', 'employee_name'],
+		filters: {
+			status: 'Active'
+		},
+		order_by: 'employee_name asc',
+		limit: 0
+	}).then(employees => {
+		console.log(employees);
+	}).catch(error => {
+		console.error('Error fetching employees:', error);
+	});
+	// adding filter to party in order to override user permission restriction
+	// frappe.call()
+	// party_type
+	// party
 }
 
 frappe.ui.form.on("Payment Requisition", {
-	btn_reset_deposit: function(frm) {
-		frm.set_value("deposit_amount", 0);
-		frm.refresh_field("deposit_amount");
-	},
-	skip_proof: function(frm){
-		frm.refresh_field("expense_items");
-	},
-	btn_deposit_remainder: function(frm) {
-		// Deposit the remainder of the requisition amount to the bank account
-		// Refresh the field to show the updated table
-		let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
-		if (deposit_amount <= 0) {
-			deposit_amount = 0;
-		}
-		frm.set_value("deposit_amount", deposit_amount);
-		frm.refresh_field("expense_items");
-		frm.refresh_field("deposit_amount");
-	},
-	after_workflow_action: function(frm) {
-		// TODO: move to py
-		// if (["Submitted to Accounts", "Pending Internal Check", "Pending First Approval", "Pending Final Approval"].includes(frm.doc.workflow_state)) {
-		// 	frm.set_value("skip_proof", 0);
-		// 	frm.set_value("allow_incomplete_documents", 0);
-		// 	frm.refresh_field("skip_proof");
-		// 	frm.refresh_field("allow_incomplete_documents");
-		// }
-		
-		// console.log('refreshed')
-		// frm.refresh();
-		// if (["Capture Expenses", "Accounts Approval", "Queried"].includes(frm.doc.workflow_state)) {
-		// 	frm.reload_doc();
-		// 	// cur_frm.refresh();
-		// }
-	},
-	mode_of_payment: function(frm){
-		set_cost_center(frm);
-	},
-	total: function(frm){
-		set_cost_center(frm);
-	},
-	activity: function(frm){
-		set_cost_center(frm);
-	},
 	refresh: function(frm) {
 		let {fields, condition} = toggle_display_sections(frm);
 		frm.toggle_display(fields, condition);
 		toggle_display_fields(frm);
+		setup_field_filters(frm);
 
 		fields.forEach(field => refresh_field(field));
 		
@@ -229,6 +124,49 @@ frappe.ui.form.on("Payment Requisition", {
 		if (frm.doc.workflow_state === "Approved" || frm.doc.workflow_state === "Payment Completed") {
 			frm.page.clear_actions_menu();
 		}
+	},
+	btn_reset_deposit: function(frm) {
+		frm.set_value("deposit_amount", 0);
+		frm.refresh_field("deposit_amount");
+	},
+	skip_proof: function(frm){
+		frm.refresh_field("expense_items");
+	},
+	btn_deposit_remainder: function(frm) {
+		// Deposit the remainder of the requisition amount to the bank account
+		// Refresh the field to show the updated table
+		let deposit_amount = frm.doc.total - frm.doc.total_expenditure;
+		if (deposit_amount <= 0) {
+			deposit_amount = 0;
+		}
+		frm.set_value("deposit_amount", deposit_amount);
+		frm.refresh_field("expense_items");
+		frm.refresh_field("deposit_amount");
+	},
+	after_workflow_action: function(frm) {
+		// TODO: move to py
+		// if (["Submitted to Accounts", "Pending Internal Check", "Pending First Approval", "Pending Final Approval"].includes(frm.doc.workflow_state)) {
+		// 	frm.set_value("skip_proof", 0);
+		// 	frm.set_value("allow_incomplete_documents", 0);
+		// 	frm.refresh_field("skip_proof");
+		// 	frm.refresh_field("allow_incomplete_documents");
+		// }
+		
+		// console.log('refreshed')
+		// frm.refresh();
+		// if (["Capture Expenses", "Accounts Approval", "Queried"].includes(frm.doc.workflow_state)) {
+		// 	frm.reload_doc();
+		// 	// cur_frm.refresh();
+		// }
+	},
+	mode_of_payment: function(frm){
+		set_cost_center(frm);
+	},
+	total: function(frm){
+		set_cost_center(frm);
+	},
+	activity: function(frm){
+		set_cost_center(frm);
 	},
 	before_workflow_action: async function(frm) {		
 		// Workflow Action message capture and action verification 
@@ -794,4 +732,88 @@ function set_cost_center(frm){
 			}
 		});
 	}
+}
+
+
+function toggle_display_fields(frm) {
+	frm.toggle_display("conversion_rate", frm.doc.currency !== frm.doc.company_currency);
+}
+function toggle_display_sections(frm) {
+	// hide all other fields except for the ones applicable to the workflow state
+	all_sections = [
+		'section_transaction', 'section_currency', 'section_posting', 'section_request_items', 'section_request_totals', 
+		'section_attachments', 'section_remarks',
+		'section_expense_items', 'section_expense_totals', 'section_deposit',
+		'section_info', 'section_approvers', 'section_history'
+	];
+	not_set = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+	documents_required_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks'];
+	submitted_to_accounts_sections = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history'];
+	approvers = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
+	payment_due = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers'];
+	capture_expenses = ['section_transaction', 'section_request_items', 'section_request_totals', 'section_currency', 'section_posting', 'section_attachments', 'section_remarks', 'section_history', 'section_approvers', 'section_expense_items', 'section_expense_totals', 'section_deposit', 'section_info'];
+
+	let display_sections = [];
+	let condition = false;
+	if (!frm.doc.workflow_state){ // before wf is set
+		display_sections = all_sections.filter(field => !not_set.includes(field));
+		// console.log("no workflow set", frm.doc.workflow_state)
+	}
+	else if (frm.doc.workflow_state === 'Attachments Required'){
+		display_sections = all_sections.filter(field => !documents_required_sections.includes(field));
+	}
+	else if (['Submitted to Accounts', 'Employee Revision Required'].includes(frm.doc.workflow_state)){ // 
+		display_sections = all_sections.filter(field => !submitted_to_accounts_sections.includes(field));
+	}
+	else if (['Pending Internal Check'].includes(frm.doc.workflow_state)){ // 
+		display_sections = all_sections.filter(field => !approvers.includes(field));
+	}
+	else if (['Pending First Approval', 'Pending Final Approval', 'Queried'].includes(frm.doc.workflow_state)){ // 
+		display_sections = all_sections.filter(field => !approvers.includes(field));
+		
+		cur_frm.toggle_enable([
+			'activity', 
+			'project_name',
+			'cost_center',
+			'mode_of_payment',
+			'currency',
+			'conversion_rate'
+		], false);
+	}
+	else if (['Payment Due'].includes(frm.doc.workflow_state)){
+		display_sections = all_sections.filter(field => !payment_due.includes(field));
+		cur_frm.toggle_enable([
+			'activity', 
+			'project_name',
+			'cost_center',
+			'mode_of_payment',
+			'currency',
+			'conversion_rate'
+		], false);
+	}
+	else if (['Capture Expenses', 'Expense Revision'].includes(frm.doc.workflow_state)){
+		display_sections = all_sections.filter(field => !capture_expenses.includes(field));
+		frm.toggle_display(capture_expenses, true);
+
+		cur_frm.toggle_enable([
+			'activity', 
+			'project_name',
+			'cost_center',
+			'mode_of_payment',
+			'currency',
+			'conversion_rate'
+		], false);
+	}
+	else {
+		// show all
+		display_sections = all_sections;
+		condition = true;
+	}
+
+	// console.log("display_sections", display_sections, frm.doc.workflow_state);
+	
+	return {
+		fields: display_sections,
+		condition: condition
+	};
 }
