@@ -1,32 +1,12 @@
 // Copyright (c) 2024, Fabric and contributors
 // For license information, please see license.txt
 
-function setup_field_filters(frm){
-
-	frappe.db.get_list('Employee', {
-		fields: ['name', 'employee_name'],
-		filters: {
-			status: 'Active'
-		},
-		order_by: 'employee_name asc',
-		limit: 0
-	}).then(employees => {
-		console.log(employees);
-	}).catch(error => {
-		console.error('Error fetching employees:', error);
-	});
-	// adding filter to party in order to override user permission restriction
-	// frappe.call()
-	// party_type
-	// party
-}
 
 frappe.ui.form.on("Payment Requisition", {
 	refresh: function(frm) {
 		let {fields, condition} = toggle_display_sections(frm);
 		frm.toggle_display(fields, condition);
 		toggle_display_fields(frm);
-		setup_field_filters(frm);
 
 		fields.forEach(field => refresh_field(field));
 		
@@ -281,24 +261,15 @@ frappe.ui.form.on("Payment Requisition", {
 			frappe.throw(__("Party can only be one of {0}", [party_types.join(", ")]));
 		}
 
-		frm.set_query("party", function () {
-			if (frm.doc.party_type == "Employee") {
-				return {
-					query: "erpnext.controllers.queries.employee_query",
-				};
-			}
-		});
+		setup_field_filters(frm);
 
-		if (frm.doc.party) {
-			$.each(
-				[
-					"party"
-				],
-				function (i, field) {
-					frm.set_value(field, null);
-				}
-			);
-		}
+		// if (frm.doc.party) {
+		// 	$.each( [ "party" ],
+		// 		function (i, field) {
+		// 			frm.set_value(field, null);
+		// 		}
+		// 	);
+		// }
 	},
 
 	make_employee_expense_tracker: function (frm) {
@@ -816,4 +787,38 @@ function toggle_display_sections(frm) {
 		fields: display_sections,
 		condition: condition
 	};
+}
+
+
+function setup_field_filters(frm) {
+    // Fetch the list of active employees
+	if (frm.doc.party_type === "Employee"){
+		frappe.db.get_list('Employee', {
+			fields: ['name', 'employee_name'],
+			filters: {
+				status: 'Active'
+			},
+			order_by: 'employee_name asc',
+			limit: 0
+		}).then(employees => {
+			// Extract employee names from the list
+			const employeeNames = employees.map(emp => emp.name);
+			
+			// Set the filter for the 'party' field
+			frm.set_query('party', function() {
+				return {
+					filters: {
+						name: ['in', employeeNames]
+					}
+				};
+			});
+		}).catch(error => {});
+	}
+	else {
+		frm.set_query('party', function() {
+			return {
+				filters: {}
+			};
+		});
+	}
 }
