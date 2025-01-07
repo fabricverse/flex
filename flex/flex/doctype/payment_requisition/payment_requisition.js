@@ -791,34 +791,13 @@ function toggle_display_sections(frm) {
 
 
 function setup_field_filters(frm) {
-    // Fetch the list of active employees
-	if (frm.doc.party_type === "Employee"){
-		frappe.db.get_list('Employee', {
-			fields: ['name', 'employee_name'],
+
+	// Set the filter for the 'party' field
+	frm.set_query('party', function() {
+		return {
 			filters: {
-				status: 'Active'
 			},
-			order_by: 'employee_name asc',
-			limit: 0
-		}).then(employees => {
-			// Extract employee names from the list
-			const employeeNames = employees.map(emp => emp.name);
-			
-			// Set the filter for the 'party' field
-			frm.set_query('party', function() {
-				return {
-					filters: {
-						name: ['in', employeeNames]
-					}
-				};
-			});
-		}).catch(error => {});
-	}
-	else {
-		frm.set_query('party', function() {
-			return {
-				filters: {}
-			};
-		});
-	}
+			ignore_user_permissions: true
+		};
+	});
 }
