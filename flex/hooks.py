@@ -361,7 +361,8 @@ fixtures = [
                 "Requisition Workflow Action Required", 
                 "Payment Requisition Approval",
                 "Payment Requisition Payment",
-                "Requisition Approval Query"
+                "Requisition Approval Query",
+                "Payment Requisition Submitted"
             ]]
         }
     }
