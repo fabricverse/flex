@@ -736,7 +736,7 @@ function toggle_display_sections(frm) {
 	else if (['Submitted to Accounts', 'Employee Revision Required'].includes(frm.doc.workflow_state)){ // 
 		display_sections = all_sections.filter(field => !submitted_to_accounts_sections.includes(field));
 	}
-	else if (['Pending Internal Check'].includes(frm.doc.workflow_state)){ // 
+	else if (['Pending Internal Check', 'Cancelled', 'Rejected'].includes(frm.doc.workflow_state)){ // 
 		display_sections = all_sections.filter(field => !approvers.includes(field));
 	}
 	else if (['Pending First Approval', 'Pending Final Approval', 'Queried'].includes(frm.doc.workflow_state)){ // 
