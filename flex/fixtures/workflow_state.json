@@ -48,10 +48,19 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2024-11-19 12:55:15.994411",
-  "name": "Pending First Approval",
+  "modified": "2024-11-19 12:54:58.654963",
+  "name": "Accounts Verification",
+  "style": "Success",
+  "workflow_state_name": "Accounts Verification"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2020-04-02 12:34:04.584370",
+  "name": "Closed",
   "style": "Info",
-  "workflow_state_name": "Pending First Approval"
+  "workflow_state_name": "Closed"
  },
  {
   "docstatus": 0,
@@ -70,15 +79,6 @@
   "name": "Pending Internal Check",
   "style": "Info",
   "workflow_state_name": "Pending Internal Check"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
-  "modified": "2024-11-19 12:54:58.654963",
-  "name": "Accounts Verification",
-  "style": "Success",
-  "workflow_state_name": "Accounts Verification"
  },
  {
   "docstatus": 0,
@@ -102,15 +102,6 @@
   "docstatus": 0,
   "doctype": "Workflow State",
   "icon": "",
-  "modified": "2020-04-02 12:34:04.584370",
-  "name": "Closed",
-  "style": "Info",
-  "workflow_state_name": "Closed"
- },
- {
-  "docstatus": 0,
-  "doctype": "Workflow State",
-  "icon": "",
   "modified": "2024-08-22 17:45:35.722331",
   "name": "Employee Revision Required",
   "style": "Warning",
@@ -124,6 +115,15 @@
   "name": "Submitted to Accounts",
   "style": "Success",
   "workflow_state_name": "Submitted to Accounts"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Workflow State",
+  "icon": "",
+  "modified": "2024-11-19 12:55:15.994411",
+  "name": "Pending First Approval",
+  "style": "Info",
+  "workflow_state_name": "Pending First Approval"
  },
  {
   "docstatus": 0,
