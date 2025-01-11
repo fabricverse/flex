@@ -7,11 +7,20 @@ frappe.ui.form.on("Payment Requisition", {
 		let {fields, condition} = toggle_display_sections(frm);
 		frm.toggle_display(fields, condition);
 		toggle_display_fields(frm);
+		toggle_proof_of_expense_mandatory(frm);
 
 		fields.forEach(field => refresh_field(field));
 		
-		frm.get_field("btn_deposit_remainder").$input.addClass("btn-primary");
-		frm.get_field("btn_reset_deposit").$input.addClass("btn-danger");
+		frm.get_field("btn_deposit_remainder").$input.css({
+			'background-color': 'var(--surface-blue-2, #E6F4FF)',
+			'color': 'var(--ink-blue-3, #007BE0)'			
+		}); 
+		//addClass("btn-link");
+		
+		frm.get_field("btn_reset_deposit").$input.css({
+			'background-color': 'var(--surface-red-2, #FFE7E7)',
+			'color': 'rgb(181 42 42 / var(--tw-text-opacity))'			
+		}); 
 
 		if (["Payment Due", "Rejected", "Cancelled", "Accounts Verification", "Closed", "Expense Revision"].includes(frm.doc.workflow_state)) {
 			cur_frm.fields_dict['section_attachments'].collapse(1)
@@ -84,7 +93,10 @@ frappe.ui.form.on("Payment Requisition", {
 					frm.refresh_field("expense_items");
 				}
 			);
-			frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default').addClass('btn-primary');
+			frm.fields_dict["expense_items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default').css({
+				'background-color': 'var(--surface-blue-2, #E6F4FF)',
+				'color': 'var(--ink-blue-3, #007BE0)'			
+			});
 
 		}
 		// frm.dashboard.show_progress(
@@ -111,6 +123,7 @@ frappe.ui.form.on("Payment Requisition", {
 	},
 	skip_proof: function(frm){
 		frm.refresh_field("expense_items");
+		toggle_proof_of_expense_mandatory(frm);
 	},
 	btn_deposit_remainder: function(frm) {
 		// Deposit the remainder of the requisition amount to the bank account
@@ -800,4 +813,25 @@ function setup_field_filters(frm) {
 			ignore_user_permissions: true
 		};
 	});
+}
+
+function toggle_proof_of_expense_mandatory(frm){
+	// if skip_proof === 1, then set mandatory property of proof_of_expense field in expense_items childtable, else set mandatory property to true
+		// use frm.set_df_property('proof_of_expense', 'reqd', 1); for true and frm.set_df_property('proof_of_expense', 'reqd', 0); for false
+
+		// could also use cur_frm.fields_dict.child_table_name.grid.toggle_reqd("child_table_fieldname", condition)
+		// from https://discuss.frappe.io/t/set-child-table-field-mandatory-based-on-condition/29743
+
+		cur_frm.fields_dict.expense_items.grid.toggle_reqd("proof_of_expense", frm.doc.skip_proof != 1)
+
+
+		// if (frm.doc.skip_proof === 1) {
+		// 	frm.doc.expense_items.forEach(item => {
+		// 		frappe.meta.get_docfield(item.doctype, 'proof_of_expense', item.name).reqd = 0;
+		// 	});
+		// } else {
+		// 	frm.doc.expense_items.forEach(item => {
+		// 		frappe.meta.get_docfield(item.doctype, 'proof_of_expense', item.name).reqd = 1;
+		// 	});
+		// }
 }
