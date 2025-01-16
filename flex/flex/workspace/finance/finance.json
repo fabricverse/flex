@@ -42,7 +42,7 @@
    "type": "Link"
   }
  ],
- "modified": "2024-11-14 17:42:15.708156",
+ "modified": "2025-01-15 12:19:41.328803",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Finance",
@@ -91,10 +91,10 @@
    "role": "Board Director"
   },
   {
-   "role": "Director Approver Level 1"
+   "role": "First Approver"
   },
   {
-   "role": "Director Approver Level 2"
+   "role": "Final Approver"
   }
  ],
  "sequence_id": 4.0,
