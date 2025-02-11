@@ -7,14 +7,59 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
+from flex.lib.permissions import get_allowed_requisitions
+
 
 class PaymentRequisition(Document):        
     def autoname(self):
         self.name = self.generate_custom_name()
     
     def after_insert(self):
+        self.update_cache_perms()
         self.db_set("allow_incomplete_documents", 0)
         self.notify_update()
+
+    def onload(self):
+        # add workflow-level permission check  
+        allowed_docs, is_approver = self.get_allowed_docs() #reset=True)
+
+        can_view = self.name in allowed_docs
+
+        # print('can_view', can_view, 'is_approver', is_approver)
+
+        if self.name:        
+            if not is_approver and not can_view:
+                raise frappe.PermissionError
+
+    def update_cache_perms(self):
+        cache_key = f"pr-{frappe.session.user}"
+        cached_docs = None
+        if cached_docs:= frappe.cache.get_value(cache_key):
+            cached_docs.append(self.name)
+        else:
+            cached_docs = self.name
+
+        frappe.cache.set_value(cache_key, cached_docs, expires_in_sec=60*20)
+
+    def get_allowed_docs(self, reset=False):
+        allowed_docs_cache_key = f"pr-{frappe.session.user}"
+        is_approver_cache_key = f"approver-{frappe.session.user}"
+
+        if reset:
+            frappe.cache.delete_value(allowed_docs_cache_key)
+            frappe.cache.delete_value(is_approver_cache_key)
+
+        allowed_docs = frappe.cache.get_value(allowed_docs_cache_key)
+        is_approver = frappe.cache.get_value(is_approver_cache_key)
+        if not allowed_docs or not is_approver:
+            allowed_docs, is_approver = get_allowed_requisitions()
+
+            frappe.cache.set_value(allowed_docs_cache_key, allowed_docs, expires_in_sec=60*60)
+            frappe.cache.set_value(is_approver_cache_key, is_approver, expires_in_sec=60*60)
+
+        # print("cache",  type(allowed_doc_cache), len(allowed_doc_cache), allowed_doc_cache)
+        return allowed_docs, is_approver
+
     
     @frappe.whitelist()
     def apply_workflow(self, user):
