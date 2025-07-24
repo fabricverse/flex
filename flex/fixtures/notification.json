@@ -177,7 +177,7 @@
   "message": "Hello\n</br>\n<p><strong>{{ doc.queried_by }}</strong> raised the following query on{{ doc.doctype }} {{ doc.name }}: </p>\n\n<p><strong>Query: </strong><blockquote>{{ doc.query }}</blockquote></p>\n\n</br>\n<p>Please view the {{ doc.doctype }} to take action by clicking the link below.</p>\n</br>\n\n<p><a style=\"btn-lg btn btn-primary primary-action\" href=\"{{doc.get_url()}}\"> {{doc.doctype}} </a></p>\n\n<br>\n<p>Regards,<br>\nFinance Team\n</p>\n\n<p>\n    <strong>Malaria Partners Zambia</strong>\n</p>\n",
   "message_type": "Markdown",
   "method": null,
-  "modified": "2024-11-21 20:18:48.316467",
+  "modified": "2025-07-23 13:01:02.153215",
   "module": "Flex",
   "name": "Requisition Approval Query",
   "print_format": "Payment Requisition Print",
@@ -202,6 +202,16 @@
     "parenttype": "Notification",
     "receiver_by_document_field": null,
     "receiver_by_role": "Accounts User"
+   },
+   {
+    "bcc": null,
+    "cc": null,
+    "condition": null,
+    "parent": "Requisition Approval Query",
+    "parentfield": "recipients",
+    "parenttype": "Notification",
+    "receiver_by_document_field": "owner",
+    "receiver_by_role": null
    }
   ],
   "send_system_notification": 1,

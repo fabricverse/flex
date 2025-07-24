@@ -90,7 +90,7 @@
   "doctype": "Workflow",
   "document_type": "Payment Requisition",
   "is_active": 1,
-  "modified": "2024-11-21 19:40:09.717383",
+  "modified": "2025-07-23 13:11:34.648729",
   "name": "Payment Requisition",
   "override_status": 0,
   "send_email_alert": 0,
@@ -232,6 +232,21 @@
    },
    {
     "allow_edit": "Accounts Manager",
+    "avoid_status_override": 0,
+    "doc_status": "0",
+    "is_optional_state": 1,
+    "message": null,
+    "next_action_email_template": null,
+    "parent": "Payment Requisition",
+    "parentfield": "states",
+    "parenttype": "Workflow",
+    "state": "Queried",
+    "update_field": "workflow_state",
+    "update_value": "Queried",
+    "workflow_builder_id": null
+   },
+   {
+    "allow_edit": "Employee Self Service",
     "avoid_status_override": 0,
     "doc_status": "0",
     "is_optional_state": 1,
@@ -677,6 +692,18 @@
     "parentfield": "transitions",
     "parenttype": "Workflow",
     "state": "Submitted to Accounts",
+    "workflow_builder_id": null
+   },
+   {
+    "action": "Submit",
+    "allow_self_approval": 1,
+    "allowed": "Employee Self Service",
+    "condition": null,
+    "next_state": "Submitted to Accounts",
+    "parent": "Payment Requisition",
+    "parentfield": "transitions",
+    "parenttype": "Workflow",
+    "state": "Queried",
     "workflow_builder_id": null
    },
    {
