@@ -515,8 +515,8 @@ class PaymentRequisition(Document):
                 'account': employee_account,
                 'cost_center': self.cost_center,
                 'exchange_rate': self.conversion_rate,
-                'party_type': self.party_type,
-                'party': self.party,
+                # 'party_type': self.party_type,
+                # 'party': self.party,
                 'project': self.project_name,
                 'is_advance': 'Yes'
             },
