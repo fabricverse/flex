@@ -638,8 +638,8 @@ class PaymentRequisition(Document):
                 'account': pay_account,
                 'cost_center': self.cost_center,
                 'party': self.party,
-                'party_type': self.party_type,
-                'project': self.project_name
+                # 'party_type': self.party_type,
+                # 'project': self.project_name
             })
 
         # Finally, add the payment account detail
