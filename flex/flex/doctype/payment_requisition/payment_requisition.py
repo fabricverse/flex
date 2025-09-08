@@ -637,9 +637,9 @@ class PaymentRequisition(Document):
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
                 'cost_center': self.cost_center,
-                'party': self.party,
+                # 'party': self.party,
                 # 'party_type': self.party_type,
-                # 'project': self.project_name
+                'project': self.project_name
             })
 
         # Finally, add the payment account detail
