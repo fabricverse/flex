@@ -625,8 +625,8 @@ class PaymentRequisition(Document):
                 'account': detail.expense_account,
                 'project': detail.project,
                 'cost_center': detail.cost_center,
-                'party_type': "Supplier" if detail.supplier else None,
-                'party': detail.supplier if detail.supplier else None
+                # 'party_type': "Supplier" if detail.supplier else None,
+                # 'party': detail.supplier if detail.supplier else None
             })
         
         # add deposit of unspent amount
