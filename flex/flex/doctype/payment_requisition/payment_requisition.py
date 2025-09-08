@@ -610,8 +610,8 @@ class PaymentRequisition(Document):
                 'account': employee_account,
                 'project': self.project_name,
                 'cost_center': self.cost_center,
-                'party_type': self.party_type,
-                'party': self.party
+                # 'party_type': self.party_type,
+                # 'party': self.party
             }
         ]
 
