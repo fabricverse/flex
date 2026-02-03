@@ -75,6 +75,11 @@ class PaymentRequisition(Document):
         
         if self.workflow_state == "Capture Expenses" and not self.payable_journal_entry:
             je = None
+            if not self.reference and self.mode_of_payment != "Cash":
+                frappe.throw("{} is required for non-cash payments.".format(frappe.bold("Payment Reference")))
+            if not self.payment_date:
+                frappe.throw("{} is required for all payments.".format(frappe.bold("Payment Date")))
+                
             # Create payable journal entry
             if self.party_type == "Employee":
                 je = self.make_employee_advance_je()
@@ -764,7 +769,6 @@ class PaymentRequisition(Document):
         # Prepare accounts list
         
         accounts = list(account_entries.values())
-        print(accounts)
 
         # Create the journal entry document
         je = frappe.get_doc({
