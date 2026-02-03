@@ -79,7 +79,7 @@ class PaymentRequisition(Document):
                 frappe.throw("{} is required for non-cash payments.".format(frappe.bold("Payment Reference")))
             if not self.payment_date:
                 frappe.throw("{} is required for all payments.".format(frappe.bold("Payment Date")))
-                
+
             # Create payable journal entry
             if self.party_type == "Employee":
                 je = self.make_employee_advance_je()
@@ -630,9 +630,7 @@ class PaymentRequisition(Document):
                 'user_remark': str((detail.description + reference) or ""),
                 'account': detail.expense_account,
                 'project': detail.project,
-                'cost_center': detail.cost_center,
-                # 'party_type': "Supplier" if detail.supplier else None,
-                # 'party': detail.supplier if detail.supplier else None
+                'cost_center': detail.cost_center
             })
         
         # add deposit of unspent amount
@@ -643,8 +641,6 @@ class PaymentRequisition(Document):
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
                 'cost_center': self.cost_center,
-                # 'party': self.party,
-                # 'party_type': self.party_type,
                 'project': self.project_name
             })
 
