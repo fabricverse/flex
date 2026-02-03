@@ -6,6 +6,7 @@ from frappe.utils import flt
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from erpnext.accounts.party import get_party_account
 
 from flex.lib.permissions import get_allowed_requisitions
 
@@ -686,6 +687,18 @@ class PaymentRequisition(Document):
         je.submit()
 
         return je
+
+
+    def get_supplier_account(self, supplier: str) -> str:
+        payable_account = get_party_account(self.company, self.party, self.party_type)
+    
+        if not payable_account:
+            payable_account = frappe.get_cached_value('Company', self.company, 'default_payable_account')
+            if not payable_account:
+                frappe.throw(_("Please set a default Payable Account for Supplier {0} or Company {1}")
+                            .format(self.party, self.company))
+
+        return payable_account
     
     def make_supplier_payable_je(self, settings, user):
         # Preparing the JE for payable entry
@@ -698,7 +711,7 @@ class PaymentRequisition(Document):
                 detail.project,
                 detail.cost_center,
                 self.party_type,
-                self.party,
+                self.party
             )
             
             if account_key in account_entries: 
@@ -712,23 +725,14 @@ class PaymentRequisition(Document):
                     'user_remark': str(detail.description),
                     'account': detail.expense_account,
                     'project': detail.project,
-                    'cost_center': detail.cost_center,
-                    'party_type': self.party_type,
-                    'party': self.party
+                    'cost_center': detail.cost_center
                 }
 
         # Group payable account details
         for detail in self.request_items:
 
-            payable_account = detail.expense_payable_account
-            if not payable_account:
-                payable_account = frappe.db.get_value('Expense Item', detail.expense_item, 'default_payable_account')
-                
-                if not payable_account:
-                    payable_account = settings.default_payable_account
+            payable_account = self.get_supplier_account(self.party)
 
-                    if not payable_account:
-                        frappe.throw(f"Please set a Default Expense Payable Account in <a href='{settings.get_url()}'>Payment Requisition Settings.</a>")
             account_key = (
                 payable_account,
                 detail.project,
@@ -746,7 +750,6 @@ class PaymentRequisition(Document):
                     account_entries[account_key]['account'] = payable_account
                     account_entries[account_key]['exchange_rate'] = self.conversion_rate
             else:
-
                 account_entries[account_key] = {
                     'credit_in_account_currency': flt(detail.amount, 3),
                     'exchange_rate': self.conversion_rate,
@@ -816,10 +819,8 @@ class PaymentRequisition(Document):
         account_entries = {}
 
         # Group request_items by account
-        for detail in self.expense_items:            
-            expense_payable_account = detail.expense_payable_account
-            if not expense_payable_account:
-                expense_payable_account = settings.default_payable_account
+        for detail in self.expense_items:  
+            payable_account = self.get_supplier_account(self.party)
 
             account_key = (
                 detail.expense_account,
@@ -830,14 +831,14 @@ class PaymentRequisition(Document):
             if account_key in account_entries:
                 account_entries[account_key]['debit_in_account_currency'] += flt(detail.amount, 3)
                 
-                account_entries[account_key]['account'] = expense_payable_account
+                account_entries[account_key]['account'] = payable_account
                 account_entries[account_key]['exchange_rate'] = self.conversion_rate
             else:
                 account_entries[account_key] = {
                     'debit_in_account_currency': flt(detail.amount, 3),
                     'exchange_rate': self.conversion_rate,
                     'user_remark': str(detail.description),
-                    'account': expense_payable_account,
+                    'account': payable_account,
                     'project': detail.project,
                     'cost_center': detail.cost_center,
                     'party_type': self.party_type,
@@ -880,8 +881,8 @@ class PaymentRequisition(Document):
                 'exchange_rate': self.conversion_rate,
                 'account': pay_account,
                 'cost_center': self.cost_center,
-                'party': self.party,
-                'party_type': self.party_type,
+                # 'party': self.party,
+                # 'party_type': self.party_type,
                 'project': self.project_name
             })
         
