@@ -61,7 +61,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Expense Account",
-   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"]]",
+   "link_filters": "[[\"Account\",\"root_type\",\"=\",\"Expense\"],[\"Account\",\"is_group\",\"=\",0]]",
    "options": "Account",
    "reqd": 1
   },
@@ -109,7 +109,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-12 15:07:48.162274",
+ "modified": "2026-02-04 11:11:37.135560",
  "modified_by": "Administrator",
  "module": "Flex",
  "name": "Expense Item",
